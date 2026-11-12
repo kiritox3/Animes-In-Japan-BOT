@@ -1,0 +1,11 @@
+{
+  "name": "Caixa — Finanças pessoais",
+  "short_name": "Caixa",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F6F3",
+  "theme_color": "#F4F6F3",
+  "lang": "pt-BR",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
