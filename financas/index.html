@@ -378,6 +378,7 @@ function lum(hex){const n=parseInt(String(hex).replace('#',''),16);const c=[n>>1
 
 /* ================= ícones ================= */
 const P={
+cloud:'M7 19h10a4.5 4.5 0 0 0 .6-8.96A6.5 6.5 0 0 0 5.2 9.2 5 5 0 0 0 7 19z',cloudoff:'M3 3l18 18 M8.5 6.3A6.5 6.5 0 0 1 17.6 10a4.5 4.5 0 0 1 2.9 7.5 M16 19H7a5 5 0 0 1-1.6-9.7',
 bell:'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z M10 21h4',tag:'M3 12V4h8l10 10-8 8z M7.5 8.5h.01',
 branch:'M7 4a2 2 0 1 0 0 4a2 2 0 0 0 0-4z M7 16a2 2 0 1 0 0 4a2 2 0 0 0 0-4z M17 6a2 2 0 1 0 0 4a2 2 0 0 0 0-4z M7 8v8 M17 10c0 3-4 3-10 4',
 moon:'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
@@ -467,7 +468,7 @@ function migrate(o){ // v1 -> v2
 function load(){try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S=o&&o.v===2?o:(o&&o.tx?migrate(o):null)}}catch(e){S=null}
   if(!S)S=seed();
   load2();ensureIncomes()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}cloudQueue()}
 
 /* ================= regras ================= */
 const catById=id=>S.cats.find(c=>c.id===id)||{id:'',name:'Sem categoria',icon:'dots',color:'#9D9CAA',type:'out'};
@@ -597,7 +598,7 @@ function invRow(v){const st=invStatus(v.c,v.k);
 /* ================= INÍCIO ================= */
 function vInicio(){
   const h=`<div><p class="sub" style="margin:0">${monthLong(CM)}</p><h1 class="ttl">${esc(S.settings.name||'Caixa')}</h1></div>
-    <button type="button" class="iconbtn" data-act="hide" aria-label="${S.settings.hide?'Mostrar valores':'Esconder valores'}">${ic(S.settings.hide?'eyeoff':'eye',22)}</button>`;
+    <div class="hr"><button type="button" class="iconbtn" data-act="cloud" aria-label="Salvamento na nuvem">${cloudIco()}</button><button type="button" class="iconbtn" data-act="hide" aria-label="${S.settings.hide?'Mostrar valores':'Esconder valores'}">${ic(S.settings.hide?'eyeoff':'eye',22)}</button></div>`;
   const secs={lembretes:sLembretes,saldo:sSaldo,mes:sMes,dia:sDia,limites:sLimites,cartoes:sCartoes,ultimas:sUltimas,metas:sMetas};
   const body=demoBanner()+S.settings.home.filter(x=>x.on&&secs[x.id]).map(x=>secs[x.id]()).join('')+
     `<section><button type="button" class="act" data-act="homecfg" style="width:100%">${ic('gear',18)}Personalizar tela inicial</button></section>`;
@@ -761,15 +762,16 @@ function chartDays(){const n=dim(M);const d=new Array(n).fill(0);S.tx.forEach(t=
 
 /* ================= CONFIG ================= */
 function crow(icn,col,title,sub,attrs,right){const tag=attrs?'button type="button"':'div';return `<${tag} class="cfgrow" ${attrs||''}><span class="cico" style="background:color-mix(in srgb,${col} 18%,transparent);color:${col}">${ic(icn,22)}</span><span class="n"><b>${title}</b>${sub?`<small>${sub}</small>`:''}</span>${right!=null?right:ic('right',18)}</${attrs?'button':'div'}>`}
-function avatarHtml(sz){const u=S.settings.user||{};const st=sz?`style="width:${sz}px;height:${sz}px"`:'';return u.photo?`<img class="avatar" ${st} src="${u.photo}" alt="">`:`<span class="avatar" ${st}>${esc((u.name||S.settings.name||'C').charAt(0).toUpperCase())}</span>`}
+function avatarHtml(sz){const u=S.settings.user||{};const st=sz?`style="width:${sz}px;height:${sz}px"`:'';const ph=u.photo||CLOUD.avatar;return ph?`<img class="avatar" ${st} src="${esc(ph)}" alt="">`:`<span class="avatar" ${st}>${esc((u.name||CLOUD.name||S.settings.name||'C').charAt(0).toUpperCase())}</span>`}
 function vConfig(){const st=S.settings,u=st.user||{};
   const outs=S.tx.filter(t=>t.type==='out');const total=outs.reduce((s,t)=>s+t.amount,0);const freq={};outs.forEach(t=>freq[t.catId]=(freq[t.catId]||0)+1);
   const top=Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];const dark=!document.documentElement.classList.contains('light');
   const body=`<div class="profile"><div><h1 class="ttl">Meu perfil</h1><p style="margin:4px 0 0;opacity:.85">${esc(st.name)}, do seu jeito.</p></div>
-    <div class="who">${avatarHtml()}<div style="min-width:0"><b>${esc(u.name||'Seu nome')}</b><span style="opacity:.85;font-size:13px">${S.accounts.length} conta${S.accounts.length===1?'':'s'} · ${S.cards.length} cart${S.cards.length===1?'ão':'ões'}</span></div></div>
+    <div class="who">${avatarHtml()}<div style="min-width:0"><b>${esc(u.name||CLOUD.name||'Seu nome')}</b><span style="opacity:.85;font-size:13px;overflow-wrap:anywhere;display:block">${CLOUD.email?esc(CLOUD.email):S.accounts.length+' conta'+(S.accounts.length===1?'':'s')+' · '+S.cards.length+' cart'+(S.cards.length===1?'ão':'ões')}</span></div></div>
     <button type="button" class="ed" data-act="profile">${ic('edit',18)}Editar perfil</button></div>
   <div class="panel stats"><div><b>${S.tx.length}</b><small>Registros</small></div><div><b class="num">${fmt(total)}</b><small>Total em gastos</small></div><div><b>${top?esc(catById(top[0]).name):'—'}</b><small>Categoria mais frequente</small></div></div>
   ${demoBanner()}
+  <section><p class="grp">Nuvem</p><div class="panel cfg"><button type="button" class="cfgrow" data-act="cloud"><span class="cico" style="background:color-mix(in srgb,#5CC8FF 18%,transparent)">${cloudIco()}</span><span class="n"><b>Salvamento na nuvem</b><small data-cloudtxt>${cloudSub()}</small></span>${ic('right',18)}</button></div></section>
   <section><p class="grp">Organização</p><div class="panel cfg">
     ${crow('wallet','var(--in)','Minhas contas','Contas, cartões, faturas e reservas','data-act="accounts"')}
     ${crow('tag','#FF6FA5','Categorias','Nome, ícone ou emoji e cor','data-act="catsheet"')}
@@ -1039,8 +1041,9 @@ function filterSheet(){const tp=gmode;
     sh.querySelector('#ff-clear').onclick=()=>{gcat='';gacc='';gsort='recent';gstatus='all';gmethod=null;gq='';closeSheet();render()}})}
 
 /* ----- backup ----- */
-function exportData(){const json=JSON.stringify(S);
-  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));a.download='caixa-backup-'+TODAY+'.json';document.body.appendChild(a);a.click();a.remove()}catch(e){}
+async function exportData(){const json=JSON.stringify(S);const fn='caixa-backup-'+TODAY+'.json';
+  try{const dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;if(dl){await dl.save({filename:fn,data:new Blob([json],{type:'application/json'})});toast('Backup salvo');return}}catch(e){if(e&&e.code&&e.code!=='unavailable'&&e.code!=='not_granted'){}}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove()}catch(e){}
   openSheet(`<h3>Backup</h3><p class="hint" style="margin-bottom:10px">Se o download não começou, copie o texto abaixo e guarde em um lugar seguro.</p><textarea class="out" id="bk" readonly>${esc(json)}</textarea><div class="btns"><button type="button" class="btn" id="cp">Copiar backup</button></div>`,sh=>{
     sh.querySelector('#cp').onclick=()=>{const ta=sh.querySelector('#bk');const fb=()=>{ta.select();toast('Texto selecionado. Copie manualmente')};
       try{navigator.clipboard.writeText(json).then(()=>toast('Backup copiado'),fb)}catch(e){fb()}}})}
@@ -1054,7 +1057,7 @@ function load2(){const d=defaults();S.settings=Object.assign(d.settings,S.settin
   S.transfers=S.transfers||[];S.incomes=S.incomes||[];S.cards.forEach(c=>{if(!c.kind)c.kind='credito'});S.cats.forEach(c=>{if(!c.subs)c.subs=[]});if(!S.settings.user)S.settings.user={name:'',photo:''};
   HOME.forEach((h,i)=>{if(!S.settings.home.some(x=>x.id===h[0])){const o={id:h[0],on:true};if(i===0)S.settings.home.unshift(o);else S.settings.home.push(o)}})}
 function ensureIncomes(){let ch=false;for(const r of S.incomes){if(r.last===CM)continue;r.last=CM;ch=true;if(S.tx.some(t=>t.src===r.id&&ymOf(t.date)===CM))continue;
-  S.tx.push({id:uid(),type:'in',amount:r.amount,desc:r.name,catId:r.catId||(catsOf('in')[0]||{}).id||'',date:dayIn(CM,r.day),method:'transf',accountId:r.accountId,card:'',inv:'',inst:null,group:null,paid:false,note:'',src:r.id})}if(ch)save()}
+  S.tx.push({id:uid(),type:'in',amount:r.amount,desc:r.name,catId:r.catId||(catsOf('in')[0]||{}).id||'',date:dayIn(CM,r.day),method:'transf',accountId:r.accountId,card:'',inv:'',inst:null,group:null,paid:false,note:'',src:r.id})}if(ch)persistLocal()}
 
 /* ================= Minhas contas (página) ================= */
 function nextIncome(r){const d=dayIn(CM,r.day);return d<TODAY?dayIn(addM(CM,1),r.day):d}
@@ -1208,6 +1211,78 @@ function homeSheet(){const st=S.settings;
   openSheet(`<h3>Tela inicial</h3><p class="hint" style="margin-bottom:10px">Escolha o que aparece e em que ordem.</p><div class="panel cfg">${st.home.map((x,k)=>{const lab=(HOME.find(h=>h[0]===x.id)||[])[1];return `<div class="cfgrow"><span class="n"><b>${lab}</b></span><span class="tools"><button type="button" data-act="hmove" data-i="${k}" data-d="-1" ${k===0?'disabled':''} aria-label="Subir">${ic('up',18)}</button><button type="button" data-act="hmove" data-i="${k}" data-d="1" ${k===st.home.length-1?'disabled':''} aria-label="Descer">${ic('down',18)}</button></span><input type="checkbox" class="toggle" data-home="${x.id}" ${x.on?'checked':''} aria-label="Mostrar ${lab}"></div>`}).join('')}</div>
    <div class="btns" style="margin-top:14px"><button type="button" class="btn" id="hm-ok">Pronto</button></div>`,sh=>{sh.querySelector('#hm-ok').onclick=()=>{closeSheet();render()}})}
 
+/* ================= nuvem (conta do Claude / email) ================= */
+const CLOUD={st:'conn',code:'',id:null,email:'',name:'',col:null,ready:false,pushing:false,dirty:false,hashes:{},timer:null,to:null,last:0,pending:null};
+const DEVICE=(()=>{try{let d=localStorage.getItem('caixa.device');if(!d){d=uid();localStorage.setItem('caixa.device',d)}return d}catch(e){return 'd'+uid()}})();
+function persistLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const hsh=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33+s.charCodeAt(i))|0;return String(h)};
+const CLOUD_TXT={off:'Indisponível aqui',signed:'Entre na sua conta',conn:'Conectando…',sync:'Salvando…',ok:'Salvo na nuvem',err:'Não foi possível salvar',nonet:'Sem conexão: salvo neste aparelho',choose:'Escolha quais dados manter'};
+const cloudCol=()=>({ok:'var(--in)',sync:'var(--accent-text)',conn:'var(--muted)',err:'var(--out)',nonet:'var(--warn)',choose:'var(--warn)'}[CLOUD.st]||'var(--muted)');
+const cloudIco=()=>`<span data-cloudico style="color:${cloudCol()};display:grid">${ic(['off','signed'].includes(CLOUD.st)?'cloudoff':'cloud',22)}</span>`;
+function cloudSub(){const t=CLOUD_TXT[CLOUD.st]||'';if(CLOUD.st==='ok'&&CLOUD.last){const m=Math.round((Date.now()-CLOUD.last)/60000);return t+(m<1?' agora':` há ${m} min`)}return t}
+function setCloud(st,code){CLOUD.st=st;CLOUD.code=code||'';document.querySelectorAll('[data-cloudico]').forEach(e=>{e.style.color=cloudCol();e.innerHTML=ic(['off','signed'].includes(st)?'cloudoff':'cloud',22)});document.querySelectorAll('[data-cloudtxt]').forEach(e=>e.textContent=cloudSub())}
+function cloudChunks(){const by={};for(const t of S.tx){const k='tx-'+String(t.date||'0000-00').slice(0,7);(by[k]=by[k]||[]).push(t)}
+  const st=Object.assign({},S);delete st.tx;delete st.cloudUser;const out={};for(const k in by)out[k]={json:JSON.stringify(by[k])};
+  out.state={json:JSON.stringify(st),updatedAt:S.updatedAt||0,device:DEVICE,chunks:Object.keys(by)};return out}
+function cloudQueue(){if(!CLOUD.col||!CLOUD.ready)return;clearTimeout(CLOUD.timer);setCloud('sync');CLOUD.timer=setTimeout(cloudPush,1200)}
+async function cloudPush(){if(!CLOUD.col)return;if(CLOUD.pushing){CLOUD.dirty=true;return}CLOUD.pushing=true;CLOUD.dirty=false;setCloud('sync');
+  try{const c=cloudChunks();const keys=Object.keys(c).filter(k=>k!=='state');
+    for(const k of keys){const h=hsh(c[k].json);if(CLOUD.hashes[k]!==h){await CLOUD.col.doc(k).set(c[k]);CLOUD.hashes[k]=h}}
+    for(const k of Object.keys(CLOUD.hashes))if(k!=='state'&&!keys.includes(k)){await CLOUD.col.doc(k).delete();delete CLOUD.hashes[k]}
+    const sh=hsh(c.state.json+c.state.chunks.join());if(CLOUD.hashes.state!==sh){await CLOUD.col.doc('state').set(c.state);CLOUD.hashes.state=sh}
+    CLOUD.last=Date.now();S.cloudUser=CLOUD.id;persistLocal();setCloud('ok')}
+  catch(e){const code=e&&e.code;if(code==='unavailable'&&!CLOUD.retried){CLOUD.retried=true;CLOUD.pushing=false;setTimeout(cloudPush,1500+Math.random()*1500);return}
+    setCloud('err',code);if(code==='quota_exceeded')toast('Espaço da nuvem cheio. Apague lançamentos antigos.')}
+  finally{if(CLOUD.pushing){CLOUD.pushing=false;CLOUD.retried=false}if(CLOUD.dirty)cloudQueue()}}
+function cloudComplete(docs){const st=docs.state;return st&&(st.chunks||[]).every(k=>docs[k])}
+function cloudSeed(docs){CLOUD.hashes={};for(const k in docs)CLOUD.hashes[k]=k==='state'?hsh(docs.state.json+(docs.state.chunks||[]).join()):hsh(docs[k].json)}
+function cloudApply(docs,msg){try{const st=JSON.parse(docs.state.json);let tx=[];(docs.state.chunks||[]).forEach(k=>{tx=tx.concat(JSON.parse(docs[k].json))});st.tx=tx;
+    S=st;S.cloudUser=CLOUD.id;load2();persistLocal();cloudSeed(docs);CLOUD.last=Date.now();setCloud('ok');render();if(msg)toast(msg)}
+  catch(e){setCloud('err','parse')}}
+function cloudInitial(docs){
+  if(!docs.state){CLOUD.ready=true;CLOUD.hashes={};cloudPush();return}
+  if(!cloudComplete(docs))return;CLOUD.ready=true;const r=docs.state;
+  if(S.cloudUser===CLOUD.id){cloudSeed(docs);if((r.updatedAt||0)>(S.updatedAt||0))cloudApply(docs,'Dados atualizados da nuvem');else if((r.updatedAt||0)<(S.updatedAt||0))cloudPush();else{CLOUD.last=Date.now();setCloud('ok')}}
+  else if(S.demo||!S.tx.length)cloudApply(docs,'Seus dados da nuvem foram carregados');
+  else{cloudSeed(docs);CLOUD.pending=docs;setCloud('choose');chooseSheet()}}
+function cloudSnap(snap){const docs={};snap.docs.forEach(d=>{if(d.exists)docs[d.id]=d.data()});
+  if(!CLOUD.ready){if(snap.metadata.fromCache)return;clearTimeout(CLOUD.to);cloudInitial(docs);return}
+  if(snap.metadata.hasPendingWrites||!docs.state||CLOUD.st==='choose')return;
+  if(docs.state.device!==DEVICE&&(docs.state.updatedAt||0)>(S.updatedAt||0)&&cloudComplete(docs))cloudApply(docs,'Atualizado com outro aparelho')}
+async function cloudInit(){
+  if(!window.claude||typeof window.claude.use!=='function'){setCloud('off');return}
+  let db=null,user=null;try{[db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')])}catch(e){}
+  if(!db||!user){setCloud('off');return}
+  const me=await user.me();if(!me.id){setCloud('signed');return}
+  CLOUD.id=me.id;CLOUD.email=me.email||'';CLOUD.name=me.name||'';CLOUD.avatar=me.avatarUrl||'';
+  try{CLOUD.col=db.collection('data/users/'+me.id)}catch(e){setCloud('off');return}
+  setCloud('conn');if(tab==='config'&&!scrim)render();
+  CLOUD.to=setTimeout(()=>{if(!CLOUD.ready)setCloud('nonet')},10000);
+  CLOUD.unsub=CLOUD.col.onSnapshot(cloudSnap,e=>{clearTimeout(CLOUD.to);setCloud(e&&e.code==='unavailable'?'nonet':'err',e&&e.code)})}
+function chooseSheet(){const d=CLOUD.pending;if(!d)return;let n=0;try{(d.state.chunks||[]).forEach(k=>n+=JSON.parse(d[k].json).length)}catch(e){}
+  const when=d.state.updatedAt?new Date(d.state.updatedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+  openSheet(`<h3>Qual versão manter?</h3><p class="hint" style="margin-bottom:14px">Sua conta já tem dados salvos na nuvem, e este aparelho também tem dados. Escolha qual versão fica valendo nos dois lugares.</p>
+   <div class="form"><button type="button" class="btn" id="ch-cloud">${ic('cloud',20)}Usar os dados da nuvem</button><p class="hint" style="margin-top:-6px">${n} lançamento${n===1?'':'s'} · salvo em ${when}</p>
+   <button type="button" class="btn ghost" id="ch-local">${ic('phone',20)}Usar os dados deste aparelho</button><p class="hint" style="margin-top:-6px">${S.tx.length} lançamento${S.tx.length===1?'':'s'} · substitui o que está na nuvem</p></div>`,sh=>{
+    sh.querySelector('#ch-cloud').onclick=()=>{const docs=CLOUD.pending;CLOUD.pending=null;closeSheet();cloudApply(docs,'Dados da nuvem carregados')};
+    sh.querySelector('#ch-local').onclick=()=>{CLOUD.pending=null;closeSheet();S.updatedAt=Date.now();persistLocal();cloudPush().then(()=>toast('Dados deste aparelho enviados'))}})}
+function cloudSheet(){const on=!!CLOUD.col;
+  const body=on?`<div class="panel" style="padding:4px 16px;margin-bottom:14px">
+      <div class="kv"><span class="muted">Situação</span><span data-cloudtxt style="color:${cloudCol()};font-weight:700">${cloudSub()}</span></div>
+      <div class="kv"><span class="muted">Conta</span><span style="overflow-wrap:anywhere;text-align:right">${esc(CLOUD.email||CLOUD.name||'Sua conta do Claude')}</span></div>
+      <div class="kv"><span class="muted">Lançamentos</span><span>${S.tx.length}</span></div></div>
+    <p class="hint" style="margin-bottom:14px">Tudo fica salvo na sua conta do Claude, ligada ao seu email. Abra este mesmo link em outro celular ou computador, entrando com o mesmo email, e seus dados aparecem lá. Ninguém mais vê esses dados, nem quem receber o link.</p>
+    <div class="btns"><button type="button" class="btn" id="cl-now">${ic('cloud',20)}Sincronizar agora</button></div>
+    <div class="btns"><button type="button" class="btn ghost" id="cl-get">Baixar da nuvem de novo</button></div>
+    ${CLOUD.st==='choose'?`<div class="btns"><button type="button" class="btn ghost" id="cl-choose">Escolher qual versão manter</button></div>`:''}`
+   :`<div class="panel pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:flex-start"><span style="color:var(--muted)">${ic('cloudoff',26)}</span><div><b>${CLOUD.st==='signed'?'Entre na sua conta do Claude':'Nuvem indisponível neste endereço'}</b><p class="hint" style="margin-top:4px">${CLOUD.st==='signed'?'Faça login no claude.ai com seu email e abra o link do app de novo.':'O salvamento na nuvem funciona quando o app é aberto pelo link do Claude, com sua conta (email). Aberto direto do arquivo ou do GitHub, os dados ficam só neste aparelho.'}</p></div></div>
+    <p class="hint">Enquanto isso, use Fazer backup em Config para guardar uma cópia.</p>`;
+  openSheet(`<h3>Salvamento na nuvem</h3>${body}`,sh=>{const q=s=>sh.querySelector(s);
+    if(q('#cl-now'))q('#cl-now').onclick=()=>{if(!CLOUD.ready){toast('Ainda conectando à nuvem');return}for(const k in CLOUD.hashes)CLOUD.hashes[k]='';cloudPush().then(()=>{if(CLOUD.st==='ok')toast('Tudo salvo na nuvem')})};
+    if(q('#cl-get'))q('#cl-get').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{const snap=await CLOUD.col.get();const docs={};snap.docs.forEach(d=>{if(d.exists)docs[d.id]=d.data()});
+      if(!docs.state){toast('A nuvem ainda está vazia');b.disabled=false;return}if(!cloudComplete(docs)){toast('Nuvem incompleta, tente de novo');b.disabled=false;return}closeSheet();CLOUD.ready=true;CLOUD.pending=null;cloudApply(docs,'Dados baixados da nuvem')}catch(err){toast('Não consegui falar com a nuvem');b.disabled=false}};
+    if(q('#cl-choose'))q('#cl-choose').onclick=()=>chooseSheet()})}
+
 /* ================= eventos ================= */
 document.addEventListener('click',e=>{
   const tb=e.target.closest('[data-tab]');if(tb){page=null;tab=tb.dataset.tab;if(tab!=='gastos'){gstatus='all';gmethod=null}render();window.scrollTo(0,0);return}
@@ -1265,6 +1340,7 @@ document.addEventListener('click',e=>{
     case 'setcur':S.settings.currency=v;done('Moeda alterada');break;
     case 'color':colorSheet();break;
     case 'homecfg':homeSheet();break;
+    case 'cloud':cloudSheet();break;
     case 'export':exportData();break;
     case 'import':importData();break;
     case 'wipe':armDanger(a,()=>{S=defaults();save();render();toast('Dados apagados')});break;
@@ -1284,7 +1360,7 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
 });
 if(window.matchMedia)matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(S.settings.theme==='system')applyTheme()});
 
-load();render();
+load();render();cloudInit();setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 })();
 </script>
