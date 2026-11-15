@@ -1,13 +1,12 @@
 # Caixa — finanças pessoais
 
-App minimalista de controle financeiro, feito para celular. Um único arquivo HTML, sem servidor nem dependências; os dados ficam salvos no navegador (localStorage).
+App de controle financeiro pessoal feito para celular, com tema escuro por padrão. É um único arquivo HTML, sem servidor nem dependências. Os dados ficam salvos no navegador (localStorage).
 
-## Funções
-- **Início**: saldo do mês, receitas × despesas, saldo acumulado, pendências (contas a pagar, a receber e faturas a vencer), gastos por categoria com orçamento e gráfico dos últimos 6 meses.
-- **Extrato**: lançamentos do mês agrupados por dia, busca e filtros (despesas, receitas, cartão, pendentes).
-- **Lançamentos**: despesa ou receita, categoria, data, pago/recebido, repetição mensal (contas fixas, salário).
-- **Cartões**: limite usado/disponível, dia de fechamento e vencimento, faturas por mês (aberta, fechada, paga, vencida), compras parceladas distribuídas nas faturas, marcar fatura como paga.
-- **Ajustes**: orçamento mensal por categoria, categorias personalizadas, backup/restauração em JSON.
+## Abas
+- **Início**: saldo das contas, resumo do mês (gastos, já pago, a pagar, entradas), quanto você pode gastar por dia sem se endividar, botões **Planejamento** e **Posso comprar isso?**, limites mensais, carrossel **Meus cartões** com fatura e limite, últimas despesas e metas de economia. Você escolhe as seções e a ordem delas.
+- **Gastos**: total do mês com pago, a pagar e um destaque que você escolhe (Pix enviados, por exemplo). Tem busca, filtros (categoria, conta/cartão, ordenação) e chips de status e forma de pagamento. As faturas dos cartões aparecem separadas das contas avulsas. Também mostra as entradas.
+- **Análises**: comparação com o mês anterior, taxa de economia, gastos por categoria, últimos 6 meses, gasto por dia, forma de pagamento, faturas e maiores gastos.
+- **Config**: tema (escuro, claro ou sistema), cor de destaque, nome do app, esconder valores, seções do Início, contas, cartões (cores, limite, fechamento e vencimento), categorias (nome, ícone e cor), planejamento e backup.
 
 ## Como usar
-Abra `index.html` no navegador. Para instalar no celular como app, publique a pasta em qualquer hospedagem estática (ex.: GitHub Pages) e use "Adicionar à tela inicial".
+Abra `index.html` no navegador. Para instalar no celular como app, publique a pasta numa hospedagem estática (GitHub Pages, por exemplo) e use "Adicionar à tela inicial".
