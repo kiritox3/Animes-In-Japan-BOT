@@ -274,6 +274,12 @@ textarea.out{width:100%;min-height:120px;border:1px solid var(--line);background
 .goal .track i{background:var(--in)}
 .toast{position:fixed;left:50%;bottom:calc(160px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:13px;font-weight:700;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
+/* importar notificações */
+.nitem{border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--sunk)}
+.nitem.off{opacity:.55}
+.nitem .nh{display:flex;align-items:center;gap:10px}
+.nsrc{margin:0;font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;overflow-wrap:anywhere}
+.btn:disabled{opacity:.5;cursor:default}
 /* páginas internas, perfil, pilha de cartões */
 .blogo{display:block;flex:none}
 .blogo *{fill:currentColor}
@@ -620,6 +626,7 @@ function sDia(){const o=outlook();
   return `<section><div class="daily">
     <div><div class="lbl">Você pode gastar por dia</div><div class="big num ${o.perDay<=0?'neg':''}" style="margin-top:6px">${fmt(o.perDay)}</div></div>
     <p>Até o fim de ${monthName(CM)} (${o.daysLeft} dia${o.daysLeft>1?'s':''}) sem se endividar. Sobra prevista: <b class="num" style="color:var(--ink)">${fmt(o.livre)}</b> = saldo ${fmt(o.saldo)} + a receber ${fmt(o.receber)} − a pagar ${fmt(o.pagar)}.${o.byLimit!=null&&o.byLimit*1<=Math.max(0,o.livre)/o.daysLeft?` Ajustado pelo seu limite mensal de ${fmt(S.plan.limit)}.`:''}</p>
+    <div class="acts" style="grid-template-columns:1fr"><button type="button" class="act" data-act="import">${ic('bell',18)}Importar notificações do banco</button></div>
     <div class="acts"><button type="button" class="act" data-act="plan">${ic('cal',18)}Planejamento</button><button type="button" class="act pri" data-act="canbuy">${ic('question',18)}Posso comprar isso?</button></div>
   </div></section>`}
 function sLimites(){const by=catSpend(CM),spent=monthOut(CM).total;const rows=[];
@@ -693,6 +700,7 @@ function gOut(){
     <div class="trio"><button type="button" data-act="gstatus" data-v="paid" aria-pressed="${gstatus==='paid'}"><i style="color:var(--in)">${ic('check',14,3)}</i><b class="num">${fmt(o.paid)}</b><small>Pago</small></button>
     <button type="button" data-act="gstatus" data-v="open" aria-pressed="${gstatus==='open'}"><i style="color:#b88300">${ic('clock',14,2.6)}</i><b class="num">${fmt(o.open)}</b><small>A pagar</small></button>
     <button type="button" data-act="gmethod" data-v="${hl}" aria-pressed="${gmethod===hl}"><i style="color:var(--accent)">${ic(methodBy(hl).i,14,2.6)}</i><b class="num">${fmt(hlTotal)}</b><small>${hlLabel}</small></button></div></div>
+  <button type="button" class="act" data-act="import" style="width:100%;margin-top:12px;color:var(--accent-text)">${ic('bell',18)}Importar notificações do banco</button>
   ${searchRow('Buscar um gasto')}
   <div class="pills">${pill('all','Todas',cnt.all)}${pill('open','A pagar',cnt.open)}${pill('paid','Pagas',cnt.paid)}${pill('late','Atrasadas',cnt.late)}
    ${ms.length?'<span class="sep"></span>':''}${ms.map(m=>`<button type="button" class="pill" data-act="gmethod" data-v="${m.id}" aria-pressed="${gmethod===m.id}">${ic(m.i,16,2.2)}${m.l} <span>${m.n}</span></button>`).join('')}</div>
@@ -773,6 +781,7 @@ function vConfig(){const st=S.settings,u=st.user||{};
   ${demoBanner()}
   <section><p class="grp">Nuvem</p><div class="panel cfg"><button type="button" class="cfgrow" data-act="cloud"><span class="cico" style="background:color-mix(in srgb,#5CC8FF 18%,transparent)">${cloudIco()}</span><span class="n"><b>Salvamento na nuvem</b><small data-cloudtxt>${cloudSub()}</small></span>${ic('right',18)}</button></div></section>
   <section><p class="grp">Organização</p><div class="panel cfg">
+    ${crow('bell','#F5C451','Importar notificações do banco','Cole o texto e vira lançamento','data-act="import"')}
     ${crow('wallet','var(--in)','Minhas contas','Contas, cartões, faturas e reservas','data-act="accounts"')}
     ${crow('tag','#FF6FA5','Categorias','Nome, ícone ou emoji e cor','data-act="catsheet"')}
     ${crow('branch','#38D6C4','Subcategorias','Detalhe seus gastos e entradas','data-act="subsheet"')}
@@ -1211,6 +1220,62 @@ function homeSheet(){const st=S.settings;
   openSheet(`<h3>Tela inicial</h3><p class="hint" style="margin-bottom:10px">Escolha o que aparece e em que ordem.</p><div class="panel cfg">${st.home.map((x,k)=>{const lab=(HOME.find(h=>h[0]===x.id)||[])[1];return `<div class="cfgrow"><span class="n"><b>${lab}</b></span><span class="tools"><button type="button" data-act="hmove" data-i="${k}" data-d="-1" ${k===0?'disabled':''} aria-label="Subir">${ic('up',18)}</button><button type="button" data-act="hmove" data-i="${k}" data-d="1" ${k===st.home.length-1?'disabled':''} aria-label="Descer">${ic('down',18)}</button></span><input type="checkbox" class="toggle" data-home="${x.id}" ${x.on?'checked':''} aria-label="Mostrar ${lab}"></div>`}).join('')}</div>
    <div class="btns" style="margin-top:14px"><button type="button" class="btn" id="hm-ok">Pronto</button></div>`,sh=>{sh.querySelector('#hm-ok').onclick=()=>{closeSheet();render()}})}
 
+/* ================= importar notificações do banco ================= */
+const BANK_WORDS=[['nubank',/nubank|\bnu\b/i],['picpay',/picpay/i],['mercadopago',/mercado\s?pago/i],['inter',/\binter\b|banco inter/i],['c6',/\bc6\b/i],['itau',/ita[uú]/i],['bradesco',/bradesco/i],['santander',/santander/i],['bb',/banco do brasil|\bbb\b/i],['caixa',/\bcaixa\b/i],['pagbank',/pagbank|pagseguro/i],['neon',/\bneon\b/i],['next',/\bnext\b/i],['will',/will\s?bank/i],['sicredi',/sicredi/i]];
+const CAT_WORDS=[['Mercado',/mercado|supermerc|atacad|assa[ií]|carrefour|extra\b|p[aã]o de a[cç]|hortifruti|a[cç]ougue|feira/i],['Alimentação',/ifood|restaur|lanch|padaria|burger|pizza|mc ?donald|bk\b|subway|caf[eé]|bar\b|sorvet|a[cç]a[ií]|rappi|z[eé] delivery/i],['Transporte',/uber|\b99\b|99app|cabify|posto|combust|shell|ipiranga|petrobr|br mania|estaciona|metr[oô]|[oô]nibus|sem parar|veloe|ped[aá]gio/i],['Saúde',/farm[aá]|drog|raia|pacheco|pague menos|cl[ií]nica|hospital|laborat|odonto|academia|smart ?fit/i],['Assinaturas',/netflix|spotify|crunchyroll|prime video|amazon prime|disney|hbo|max\b|youtube|deezer|apple\.com|google one|icloud|globoplay|paramount/i],['Compras',/amazon|shopee|mercado ?livre|magalu|magazine|americanas|aliexpress|shein|renner|riachuelo|c&a|zara|kabum|casas bahia/i],['Contas',/energia|enel|cemig|light\b|copel|sabesp|[aá]gua|internet|vivo|claro|\btim\b|\boi\b|net\b|g[aá]s|condom[ií]nio|boleto/i],['Lazer',/cinema|ingresso|steam|playstation|xbox|nintendo|show|teatro|parque/i],['Educação',/escola|faculdade|curso|udemy|alura|livrar/i],['Moradia',/aluguel|imobili|condom/i]];
+function nParse(text){const t=text.replace(/\s+/g,' ').trim();const m=t.match(/R\$\s?(-?[\d.]+,\d{2}|-?\d+(?:\.\d{2})?)/i);if(!m)return null;
+  const amount=Math.abs(parseMoney(m[1]));if(!(amount>0))return null;
+  const isIn=/(voc[eê] recebeu|recebid[oa]|pix recebido|transfer[eê]ncia recebida|caiu na (sua )?conta|dep[oó]sito|estorno|reembolso|cashback|rendimento|cr[eé]dito em conta|sal[aá]rio)/i.test(t)&&!/(compra|pagou|enviou|enviad[oa]|pagamento (de|efetuado|realizado|aprovado))/i.test(t.replace(/estorno.*$/i,''));
+  let method='pix';if(/d[eé]bito/i.test(t))method='debito';else if(/boleto/i.test(t))method='boleto';else if(/\bpix\b/i.test(t))method='pix';else if(/transfer[eê]ncia|\bted\b|\bdoc\b/i.test(t))method='transf';else if(/cart[aã]o|cr[eé]dito|compra (aprovada|de|no)|parcela/i.test(t))method='credito';
+  if(isIn&&method==='credito')method='pix';
+  let desc='';const pats=isIn?[/\bde\s+([^.,;!\n]+?)(?=\s+(?:no|na|em|via|pelo|pela|para|com)\b|[.,;!]|$)/i,/\bpor\s+([^.,;!]+?)(?=[.,;!]|$)/i]:[/\bem\s+([^.,;!\n]+?)(?=\s+(?:no|na|para|com|via|pelo|pela|às|as|dia|hoje|em \d)\b|[.,;!]|$)/i,/\bpara\s+(?!o cart|a conta|seu cart|sua conta)([^.,;!\n]+?)(?=\s+(?:no|na|via|com|às|as)\b|[.,;!]|$)/i,/\b(?:no|na)\s+([A-Z0-9*][^.,;!\n]+?)(?=\s+(?:com|no|na|para|via|pelo|pela|às|as)\b|[.,;!]|$)/];
+  const tail=t.slice(m.index+m[0].length);for(const p of pats){const x=tail.match(p)||t.match(p);if(!x)continue;const v=x[1].replace(/\s*\d{2}\/\d{2}(\/\d{2,4})?.*$/,'').replace(/\s*\d{1,2}:\d{2}.*$/,'').trim();if(v&&!/R\$|cart[aã]o|final \d|valor de|conta/i.test(v)&&v.length<=48){desc=v;break}}
+  if(!desc){const h=t.match(/^([^:]{2,30}):/);if(h&&!BANK_WORDS.some(([,r])=>r.test(h[1]))&&!/pix|compra|transfer|aviso|alerta/i.test(h[1]))desc=h[1].trim()}
+  desc=desc.replace(/^(o|a|os|as)\s+/i,'').replace(/\s+(aprovad[oa]|realizad[oa]|confirmad[oa])$/i,'');
+  if(desc===desc.toUpperCase())desc=desc.toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());
+  let date=TODAY;const dm=t.match(/\b(\d{2})\/(\d{2})(?:\/(\d{2,4}))?\b/);if(dm){let y=dm[3]?(dm[3].length===2?'20'+dm[3]:dm[3]):TODAY.slice(0,4);const d=y+'-'+dm[2]+'-'+dm[1];if(!isNaN(new Date(d+'T12:00'))&&d<=TODAY)date=d}
+  const l4=(t.match(/final\s*(\d{4})/i)||[])[1];const bank=(BANK_WORDS.find(([,r])=>r.test(t))||[])[0]||'';
+  let card='',accountId='';if(method==='credito'){const c=(l4&&CC().find(c=>c.last4===l4))||(bank&&CC().find(c=>c.bank===bank))||(CC().length===1?CC()[0]:null);if(c)card=c.id;else method='debito'}
+  const dc=method==='debito'?((l4&&S.cards.find(c=>c.last4===l4))||(bank&&S.cards.find(c=>c.bank===bank))):null;
+  const acc=(dc&&accById(dc.accountId))||(bank&&S.accounts.find(a=>a.bank===bank))||S.accounts[0];accountId=acc?acc.id:'';
+  const type=isIn?'in':'out';const prev=desc&&S.tx.slice().reverse().find(x=>x.type===type&&x.desc&&x.desc.toLowerCase()===desc.toLowerCase());
+  let catId=prev?prev.catId:'';if(!catId){const name=type==='out'?(CAT_WORDS.find(([,r])=>r.test(desc+' '+t))||[])[0]:(/sal[aá]rio/i.test(t)?'Salário':null);const c=name&&catsOf(type).find(c=>c.name===name);catId=(c||catsOf(type).find(c=>c.name==='Outros')||catsOf(type)[0]||{}).id||''}
+  const dup=S.tx.some(x=>x.type===type&&x.amount===amount&&x.date===date&&(!desc||!x.desc||x.desc.toLowerCase()===desc.toLowerCase()));
+  return{id:uid(),src:t,type,amount,desc:desc||(isIn?'Entrada':'Gasto'),catId,date,method,card,accountId,on:!dup,dup,low:!desc}}
+function nSplit(raw){const blocks=raw.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);const out=[];
+  blocks.forEach(b=>{const lines=b.split('\n').map(x=>x.trim()).filter(Boolean);const withR=lines.filter(l=>/R\$/.test(l));if(withR.length>1){let buf=[];lines.forEach(l=>{buf.push(l);if(/R\$/.test(l)){out.push(buf.join(' '));buf=[]}});if(buf.length&&out.length)out[out.length-1]+=' '+buf.join(' ')}else out.push(lines.join(' '))});return out}
+function nRow(it,i){const cats=catsOf(it.type);const ms=METHODS.filter(m=>it.type==='out'||IN_METHODS.includes(m.id)).filter(m=>m.id!=='credito'||CC().length);
+  return `<div class="nitem ${it.on?'':'off'}" data-i="${i}"><div class="nh"><input type="checkbox" class="toggle" data-n="on" ${it.on?'checked':''} aria-label="Importar este"><div class="seg" role="group" style="flex:1"><button type="button" data-ntype="out" aria-pressed="${it.type==='out'}">Gasto</button><button type="button" data-ntype="in" aria-pressed="${it.type==='in'}">Entrada</button></div></div>
+   ${it.dup?'<span class="st bad">Parece repetido: já existe um lançamento igual</span>':it.low?'<span class="st wait">Confira a descrição</span>':''}
+   <p class="nsrc">${esc(it.src)}</p>
+   <div class="two"><div class="field"><label>Valor</label><input data-n="amount" inputmode="decimal" value="${toInput(it.amount)}"></div><div class="field"><label>Data</label><input data-n="date" type="date" value="${it.date}"></div></div>
+   <div class="field"><label>Descrição</label><input data-n="desc" value="${esc(it.desc)}"></div>
+   <div class="two"><div class="field"><label>Categoria</label><select data-n="catId">${cats.map(c=>`<option value="${c.id}" ${c.id===it.catId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+   <div class="field"><label>Forma</label><select data-n="method">${ms.map(m=>`<option value="${m.id}" ${m.id===it.method?'selected':''}>${m.l}</option>`).join('')}</select></div></div>
+   ${it.method==='credito'?`<div class="field"><label>Cartão</label><select data-n="card">${CC().map(c=>`<option value="${c.id}" ${c.id===it.card?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`:`<div class="field"><label>Conta</label><select data-n="accountId">${S.accounts.map(a=>`<option value="${a.id}" ${a.id===it.accountId?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`}</div>`}
+function importSheet(prefill){let items=[];
+  openSheet(`<h3>Importar notificações do banco</h3>
+   <p class="hint" style="margin-bottom:12px">Copie o texto das notificações (Nubank, PicPay, Mercado Pago, Inter e outros) e cole aqui. Pode colar várias de uma vez, separadas por linha em branco. O app lê valor, loja, cartão e data, e você confere antes de salvar.</p>
+   <div class="form"><div class="field"><label for="n-text">Texto das notificações</label><textarea class="out" id="n-text" style="min-height:130px;font-family:var(--font-ui);font-size:14px" placeholder="Ex.: Compra de R$ 42,50 APROVADA em PADARIA BOM PAO para o cartão com final 4821.&#10;&#10;Você recebeu uma transferência de R$ 150,00 de Maria Souza.">${esc(prefill||'')}</textarea></div>
+   <div class="btns"><button type="button" class="btn" id="n-read">${ic('search',20)}Ler notificações</button></div></div>
+   <div id="n-out" style="margin-top:16px"></div>`,sh=>{const $=s=>sh.querySelector(s);
+    const draw=()=>{const sel=items.filter(x=>x.on).length;
+      $('#n-out').innerHTML=items.length?`<div class="sec-h" style="margin-bottom:10px"><h2 style="font-size:17px">${items.length} encontrado${items.length>1?'s':''}</h2><span class="sub">${items.filter(x=>x.dup||x.low).length?items.filter(x=>x.dup||x.low).length+' para revisar':'Tudo certo'}</span></div>
+        <div style="display:flex;flex-direction:column;gap:12px">${items.map(nRow).join('')}</div>
+        <div class="btns" style="margin-top:14px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><button type="button" class="btn" id="n-save" ${sel?'':'disabled'}>${ic('check',20,2.6)}Adicionar ${sel} lançamento${sel===1?'':'s'}</button></div>`:''};
+    const read=()=>{const raw=$('#n-text').value;const parts=nSplit(raw);items=parts.map(nParse).filter(Boolean);const bad=parts.length-items.length;draw();
+      if(!parts.length)toast('Cole o texto de uma notificação');else if(!items.length)toast('Não achei nenhum valor em R$ no texto');else if(bad)toast(bad+' trecho'+(bad>1?'s':'')+' sem valor foi ignorado')};
+    $('#n-read').onclick=read;if(prefill)read();
+    sh.addEventListener('input',e=>{const el=e.target,box=el.closest('.nitem');if(!box)return;const it=items[+box.dataset.i],k=el.dataset.n;if(!k||k==='on')return;
+      if(k==='amount'){const v=parseMoney(el.value);if(v>0)it.amount=v}else it[k]=el.value});
+    sh.addEventListener('change',e=>{const el=e.target,box=el.closest('.nitem');if(!box)return;const it=items[+box.dataset.i];
+      if(el.dataset.n==='on'){it.on=el.checked;draw()}else if(el.dataset.n==='method'){it.method=el.value;if(it.method==='credito'&&!it.card)it.card=(CC()[0]||{}).id||'';draw()}});
+    sh.addEventListener('click',e=>{const b=e.target.closest('[data-ntype]');if(b){const it=items[+b.closest('.nitem').dataset.i];if(it.type===b.dataset.ntype)return;it.type=b.dataset.ntype;
+        if(it.type==='in'&&!IN_METHODS.includes(it.method))it.method='pix';const c=catsOf(it.type);it.catId=(c.find(x=>x.name==='Outros')||c[0]||{}).id||'';draw();return}
+      if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);let n=0;
+        ok.forEach(it=>{const cr=it.type==='out'&&it.method==='credito'&&cardById(it.card);const base={id:uid(),type:it.type,amount:it.amount,desc:it.desc.trim(),catId:it.catId,sub:'',date:it.date||TODAY,method:it.method,note:'Importado de notificação',group:null,inst:null};
+          if(cr){const c=cardById(it.card);S.tx.push({...base,card:c.id,inv:invOf(c,base.date),paid:true,accountId:''})}else S.tx.push({...base,method:it.method==='credito'?'debito':it.method,card:'',inv:'',paid:true,accountId:it.accountId||(S.accounts[0]||{}).id});n++});
+        if(S.demo&&n)S.demo=S.demo;done(n+' lançamento'+(n===1?'':'s')+' importado'+(n===1?'':'s'))}})})}
 /* ================= nuvem (conta do Claude / email) ================= */
 const CLOUD={st:'conn',code:'',id:null,email:'',name:'',col:null,ready:false,pushing:false,dirty:false,hashes:{},timer:null,to:null,last:0,pending:null};
 const DEVICE=(()=>{try{let d=localStorage.getItem('caixa.device');if(!d){d=uid();localStorage.setItem('caixa.device',d)}return d}catch(e){return 'd'+uid()}})();
@@ -1341,6 +1406,7 @@ document.addEventListener('click',e=>{
     case 'color':colorSheet();break;
     case 'homecfg':homeSheet();break;
     case 'cloud':cloudSheet();break;
+    case 'import':importSheet();break;
     case 'export':exportData();break;
     case 'import':importData();break;
     case 'wipe':armDanger(a,()=>{S=defaults();save();render();toast('Dados apagados')});break;
