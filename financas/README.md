@@ -10,3 +10,6 @@ App de controle financeiro pessoal feito para celular, com tema escuro por padr�
 
 ## Como usar
 Abra `index.html` no navegador. Para instalar no celular como app, publique a pasta numa hospedagem estática (GitHub Pages, por exemplo) e use "Adicionar à tela inicial".
+
+## Créditos
+As marcas dos bancos (em uma cor) vêm do pacote `@edusites/bancos-brasil`, licença MIT. Os logotipos são marcas registradas dos respectivos bancos e aparecem só para identificar as contas e os cartões do usuário.
