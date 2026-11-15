@@ -1,0 +1,60 @@
+name: Caixa Android
+
+on:
+  push:
+    branches: [claude/finance-app-minimal-xb0ksk]
+    paths:
+      - 'financas/**'
+      - 'android/**'
+      - '.github/workflows/caixa-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: caixa-android
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Gerar APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+
+      - name: Renomear APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk Caixa.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Caixa-apk
+          path: Caixa.apk
+
+      - name: Publicar na página de download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: caixa-android-latest
+          name: Caixa para Android
+          target_commitish: ${{ github.sha }}
+          prerelease: true
+          make_latest: false
+          files: Caixa.apk
+          body: |
+            Baixe o arquivo **Caixa.apk** abaixo no celular Android e abra para instalar.
+            Se o Android pedir, permita "instalar apps desta fonte".
+            Depois, no Caixa, vá em Config > Ler notificações do banco para dar o acesso.
+
+            Versão gerada automaticamente a partir do commit ${{ github.sha }}.

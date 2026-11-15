@@ -606,7 +606,7 @@ function vInicio(){
   const h=`<div><p class="sub" style="margin:0">${monthLong(CM)}</p><h1 class="ttl">${esc(S.settings.name||'Caixa')}</h1></div>
     <div class="hr"><button type="button" class="iconbtn" data-act="cloud" aria-label="Salvamento na nuvem">${cloudIco()}</button><button type="button" class="iconbtn" data-act="hide" aria-label="${S.settings.hide?'Mostrar valores':'Esconder valores'}">${ic(S.settings.hide?'eyeoff':'eye',22)}</button></div>`;
   const secs={lembretes:sLembretes,saldo:sSaldo,mes:sMes,dia:sDia,limites:sLimites,cartoes:sCartoes,ultimas:sUltimas,metas:sMetas};
-  const body=demoBanner()+S.settings.home.filter(x=>x.on&&secs[x.id]).map(x=>secs[x.id]()).join('')+
+  const body=demoBanner()+sInbox()+S.settings.home.filter(x=>x.on&&secs[x.id]).map(x=>secs[x.id]()).join('')+
     `<section><button type="button" class="act" data-act="homecfg" style="width:100%">${ic('gear',18)}Personalizar tela inicial</button></section>`;
   return[h,body]}
 function sSaldo(){const tot=S.accounts.filter(a=>a.include!==false).reduce((s,a)=>s+accBalance(a),0);
@@ -779,6 +779,7 @@ function vConfig(){const st=S.settings,u=st.user||{};
     <button type="button" class="ed" data-act="profile">${ic('edit',18)}Editar perfil</button></div>
   <div class="panel stats"><div><b>${S.tx.length}</b><small>Registros</small></div><div><b class="num">${fmt(total)}</b><small>Total em gastos</small></div><div><b>${top?esc(catById(top[0]).name):'—'}</b><small>Categoria mais frequente</small></div></div>
   ${demoBanner()}
+  ${autoSection()}
   <section><p class="grp">Nuvem</p><div class="panel cfg"><button type="button" class="cfgrow" data-act="cloud"><span class="cico" style="background:color-mix(in srgb,#5CC8FF 18%,transparent)">${cloudIco()}</span><span class="n"><b>Salvamento na nuvem</b><small data-cloudtxt>${cloudSub()}</small></span>${ic('right',18)}</button></div></section>
   <section><p class="grp">Organização</p><div class="panel cfg">
     ${crow('bell','#F5C451','Importar notificações do banco','Cole o texto e vira lançamento','data-act="import"')}
@@ -1051,6 +1052,7 @@ function filterSheet(){const tp=gmode;
 
 /* ----- backup ----- */
 async function exportData(){const json=JSON.stringify(S);const fn='caixa-backup-'+TODAY+'.json';
+  if(AND){let where='';try{where=AND.saveFile(fn,json)}catch(e){}if(where){openSheet(`<h3>Backup salvo</h3><p class="hint" style="margin-bottom:14px">Arquivo salvo em <b>${esc(where)}</b>. Para levar a outro aparelho ou guardar no Drive, toque em Compartilhar.</p><div class="btns"><button type="button" class="btn" id="bk-share">Compartilhar backup</button></div>`,sh=>{sh.querySelector('#bk-share').onclick=()=>{try{AND.shareText('Backup do Caixa',json)}catch(e){}}});return}}
   try{const dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;if(dl){await dl.save({filename:fn,data:new Blob([json],{type:'application/json'})});toast('Backup salvo');return}}catch(e){if(e&&e.code&&e.code!=='unavailable'&&e.code!=='not_granted'){}}
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove()}catch(e){}
   openSheet(`<h3>Backup</h3><p class="hint" style="margin-bottom:10px">Se o download não começou, copie o texto abaixo e guarde em um lugar seguro.</p><textarea class="out" id="bk" readonly>${esc(json)}</textarea><div class="btns"><button type="button" class="btn" id="cp">Copiar backup</button></div>`,sh=>{
@@ -1247,14 +1249,14 @@ function nSplit(raw){const blocks=raw.split(/\n\s*\n/).map(b=>b.trim()).filter(B
 function nRow(it,i){const cats=catsOf(it.type);const ms=METHODS.filter(m=>it.type==='out'||IN_METHODS.includes(m.id)).filter(m=>m.id!=='credito'||CC().length);
   return `<div class="nitem ${it.on?'':'off'}" data-i="${i}"><div class="nh"><input type="checkbox" class="toggle" data-n="on" ${it.on?'checked':''} aria-label="Importar este"><div class="seg" role="group" style="flex:1"><button type="button" data-ntype="out" aria-pressed="${it.type==='out'}">Gasto</button><button type="button" data-ntype="in" aria-pressed="${it.type==='in'}">Entrada</button></div></div>
    ${it.dup?'<span class="st bad">Parece repetido: já existe um lançamento igual</span>':it.low?'<span class="st wait">Confira a descrição</span>':''}
-   <p class="nsrc">${esc(it.src)}</p>
+   <p class="nsrc">${it.app?'<b>'+esc(it.app)+'</b> · ':''}${esc(it.src)}</p>${it.pkg?`<button type="button" class="link" data-block="${esc(it.pkg)}" style="align-self:flex-start;padding:0;font-size:13px">Não ler mais ${esc(it.app||'este app')}</button>`:''}
    <div class="two"><div class="field"><label>Valor</label><input data-n="amount" inputmode="decimal" value="${toInput(it.amount)}"></div><div class="field"><label>Data</label><input data-n="date" type="date" value="${it.date}"></div></div>
    <div class="field"><label>Descrição</label><input data-n="desc" value="${esc(it.desc)}"></div>
    <div class="two"><div class="field"><label>Categoria</label><select data-n="catId">${cats.map(c=>`<option value="${c.id}" ${c.id===it.catId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
    <div class="field"><label>Forma</label><select data-n="method">${ms.map(m=>`<option value="${m.id}" ${m.id===it.method?'selected':''}>${m.l}</option>`).join('')}</select></div></div>
    ${it.method==='credito'?`<div class="field"><label>Cartão</label><select data-n="card">${CC().map(c=>`<option value="${c.id}" ${c.id===it.card?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`:`<div class="field"><label>Conta</label><select data-n="accountId">${S.accounts.map(a=>`<option value="${a.id}" ${a.id===it.accountId?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`}</div>`}
-function importSheet(prefill){let items=[];
-  openSheet(`<h3>Importar notificações do banco</h3>
+function importSheet(prefill,inbox){let items=inbox?(S.inbox||[]).slice():[];
+  openSheet(inbox?`<h3>Revisar lançamentos capturados</h3><p class="hint" style="margin-bottom:12px">Confira o que o Caixa leu nas notificações. Os desmarcados serão descartados.</p><div id="n-out"></div>`:`<h3>Importar notificações do banco</h3>
    <p class="hint" style="margin-bottom:12px">Copie o texto das notificações (Nubank, PicPay, Mercado Pago, Inter e outros) e cole aqui. Pode colar várias de uma vez, separadas por linha em branco. O app lê valor, loja, cartão e data, e você confere antes de salvar.</p>
    <div class="form"><div class="field"><label for="n-text">Texto das notificações</label><textarea class="out" id="n-text" style="min-height:130px;font-family:var(--font-ui);font-size:14px" placeholder="Ex.: Compra de R$ 42,50 APROVADA em PADARIA BOM PAO para o cartão com final 4821.&#10;&#10;Você recebeu uma transferência de R$ 150,00 de Maria Souza.">${esc(prefill||'')}</textarea></div>
    <div class="btns"><button type="button" class="btn" id="n-read">${ic('search',20)}Ler notificações</button></div></div>
@@ -1262,20 +1264,57 @@ function importSheet(prefill){let items=[];
     const draw=()=>{const sel=items.filter(x=>x.on).length;
       $('#n-out').innerHTML=items.length?`<div class="sec-h" style="margin-bottom:10px"><h2 style="font-size:17px">${items.length} encontrado${items.length>1?'s':''}</h2><span class="sub">${items.filter(x=>x.dup||x.low).length?items.filter(x=>x.dup||x.low).length+' para revisar':'Tudo certo'}</span></div>
         <div style="display:flex;flex-direction:column;gap:12px">${items.map(nRow).join('')}</div>
-        <div class="btns" style="margin-top:14px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><button type="button" class="btn" id="n-save" ${sel?'':'disabled'}>${ic('check',20,2.6)}Adicionar ${sel} lançamento${sel===1?'':'s'}</button></div>`:''};
+        <div class="btns" style="margin-top:14px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><button type="button" class="btn" id="n-save" ${sel||inbox?'':'disabled'}>${ic('check',20,2.6)}${sel?'Adicionar '+sel+' lançamento'+(sel===1?'':'s'):'Descartar todos'}</button></div>`:(inbox?'<div class="empty">Nada para revisar.</div>':'')};
     const read=()=>{const raw=$('#n-text').value;const parts=nSplit(raw);items=parts.map(nParse).filter(Boolean);const bad=parts.length-items.length;draw();
       if(!parts.length)toast('Cole o texto de uma notificação');else if(!items.length)toast('Não achei nenhum valor em R$ no texto');else if(bad)toast(bad+' trecho'+(bad>1?'s':'')+' sem valor foi ignorado')};
-    $('#n-read').onclick=read;if(prefill)read();
+    if($('#n-read'))$('#n-read').onclick=read;if(prefill)read();if(inbox)draw();
     sh.addEventListener('input',e=>{const el=e.target,box=el.closest('.nitem');if(!box)return;const it=items[+box.dataset.i],k=el.dataset.n;if(!k||k==='on')return;
       if(k==='amount'){const v=parseMoney(el.value);if(v>0)it.amount=v}else it[k]=el.value});
     sh.addEventListener('change',e=>{const el=e.target,box=el.closest('.nitem');if(!box)return;const it=items[+box.dataset.i];
       if(el.dataset.n==='on'){it.on=el.checked;draw()}else if(el.dataset.n==='method'){it.method=el.value;if(it.method==='credito'&&!it.card)it.card=(CC()[0]||{}).id||'';draw()}});
     sh.addEventListener('click',e=>{const b=e.target.closest('[data-ntype]');if(b){const it=items[+b.closest('.nitem').dataset.i];if(it.type===b.dataset.ntype)return;it.type=b.dataset.ntype;
         if(it.type==='in'&&!IN_METHODS.includes(it.method))it.method='pix';const c=catsOf(it.type);it.catId=(c.find(x=>x.name==='Outros')||c[0]||{}).id||'';draw();return}
-      if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);let n=0;
-        ok.forEach(it=>{const cr=it.type==='out'&&it.method==='credito'&&cardById(it.card);const base={id:uid(),type:it.type,amount:it.amount,desc:it.desc.trim(),catId:it.catId,sub:'',date:it.date||TODAY,method:it.method,note:'Importado de notificação',group:null,inst:null};
-          if(cr){const c=cardById(it.card);S.tx.push({...base,card:c.id,inv:invOf(c,base.date),paid:true,accountId:''})}else S.tx.push({...base,method:it.method==='credito'?'debito':it.method,card:'',inv:'',paid:true,accountId:it.accountId||(S.accounts[0]||{}).id});n++});
-        if(S.demo&&n)S.demo=S.demo;done(n+' lançamento'+(n===1?'':'s')+' importado'+(n===1?'':'s'))}})})}
+      const bk=e.target.closest('[data-block]');if(bk){const pkg=bk.dataset.block,it0=items.find(x=>x.pkg===pkg);S.settings.blockedApps=[...new Set([...(S.settings.blockedApps||[]),pkg])];S.settings.appNames=Object.assign(S.settings.appNames||{},{[pkg]:it0&&it0.app||pkg});
+        items=items.filter(x=>x.pkg!==pkg);S.inbox=(S.inbox||[]).filter(x=>x.pkg!==pkg);save();draw();toast('Não vou mais ler '+(it0&&it0.app||'esse app'));return}
+      if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);ok.forEach(addParsed);const n=ok.length;
+        if(inbox){const ids=new Set(items.map(x=>x.id));S.inbox=(S.inbox||[]).filter(x=>!ids.has(x.id))}
+        done(n?n+' lançamento'+(n===1?'':'s')+' adicionado'+(n===1?'':'s'):'Descartados')}})})}
+/* ================= app Android: leitura automática das notificações ================= */
+const AND=(()=>{try{return window.CaixaAndroid||null}catch(e){return null}})();
+const APK_URL='https://github.com/kiritox3/Animes-In-Japan-BOT/releases/tag/caixa-android-latest';
+function addParsed(it){const cr=it.type==='out'&&it.method==='credito'&&cardById(it.card);
+  const base={id:uid(),type:it.type,amount:it.amount,desc:String(it.desc||'').trim(),catId:it.catId,sub:'',date:it.date||TODAY,method:it.method,note:it.app?'Capturado de '+it.app:'Importado de notificação',group:null,inst:null};
+  if(cr){const c=cardById(it.card);S.tx.push({...base,card:c.id,inv:invOf(c,base.date),paid:true,accountId:''})}
+  else S.tx.push({...base,method:it.method==='credito'?'debito':it.method,card:'',inv:'',paid:true,accountId:it.accountId||(S.accounts[0]||{}).id})}
+const ymdOf=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+function andPull(){if(!AND)return;let arr=[];try{arr=JSON.parse(AND.pull()||'[]')}catch(e){arr=[]}if(!arr.length)return;
+  const blocked=S.settings.blockedApps||[];S.inbox=S.inbox||[];let added=0,queued=0;
+  arr.forEach(n=>{if(!n||!n.text||blocked.includes(n.pkg))return;const it=nParse(n.text);if(!it)return;
+    if(n.time&&it.date===TODAY)it.date=ymdOf(n.time);it.app=n.app||'';it.pkg=n.pkg||'';it.src=n.text.replace(/\s+/g,' ');
+    if(S.settings.autoImport==='auto'&&!it.dup&&!it.low){addParsed(it);added++}else{S.inbox.push(it);queued++}});
+  if(!added&&!queued)return;save();if(!scrim)render();
+  toast(added&&queued?`${added} adicionado${added>1?'s':''}, ${queued} para revisar`:added?`${added} lançamento${added>1?'s':''} adicionado${added>1?'s':''} das notificações`:`${queued} lançamento${queued>1?'s':''} para revisar`)}
+window.caixaNotif=andPull;
+window.caixaBack=()=>{if(scrim){closeSheet();return true}if(page){page=null;render();return true}if(tab!=='inicio'){tab='inicio';render();window.scrollTo(0,0);return true}return false};
+function sInbox(){const n=(S.inbox||[]).length;if(!n)return'';
+  return `<section><button type="button" class="panel cfgrow" data-act="inbox" style="border:1px solid color-mix(in srgb,var(--warn) 45%,var(--line));background:color-mix(in srgb,var(--warn) 9%,var(--surface));border-radius:var(--r)"><span style="color:var(--warn)">${ic('alert',24)}</span><span class="n"><b>${n} lançamento${n>1?'s':''} das notificações para revisar</b><small style="color:var(--warn);font-weight:700">Revisar agora</small></span>${ic('right',20)}</button></section>`}
+function autoSection(){if(!AND)return `<section><p class="grp">App para Android</p><div class="panel cfg">${crow('phone','#4ADE95','Instalar no Android','Lê as notificações do banco sozinho','data-act="getapk"')}</div></section>`;
+  let ok=false;try{ok=AND.hasAccess()}catch(e){}let al=true;try{al=AND.alertsOn()}catch(e){}const bl=S.settings.blockedApps||[];
+  return `<section><p class="grp">Leitura automática</p><div class="panel cfg">
+   ${crow('bell',ok?'var(--in)':'var(--warn)','Ler notificações do banco',ok?'Ativada: gastos e entradas entram sozinhos':'Desativada. Toque para permitir o acesso às notificações','data-act="andaccess"',ok?`<span class="st ok">Ativa</span>`:`<span class="st wait">Permitir</span>`)}
+   ${crow('check','#9B7BFF','Adicionar sem revisar','Lançamentos claros entram direto. Os duvidosos ou repetidos sempre vão para revisão.','',`<input type="checkbox" class="toggle" id="autoimp" ${S.settings.autoImport==='auto'?'checked':''} aria-label="Adicionar sem revisar">`)}
+   ${crow('bell','#F5C451','Avisar quando capturar','Mostra um aviso do Caixa com o valor capturado','',`<input type="checkbox" class="toggle" id="andalerts" ${al?'checked':''} aria-label="Avisar quando capturar">`)}
+   ${bl.length?`<div class="cfgrow" style="flex-direction:column;align-items:stretch;gap:8px"><span class="n"><b>Apps ignorados</b><small>Toque para voltar a ler</small></span><div class="subline">${bl.map(p=>`<span class="x">${esc((S.settings.appNames||{})[p]||p)}<button type="button" data-act="unblock" data-v="${esc(p)}" aria-label="Voltar a ler">${ic('x',14,2.4)}</button></span>`).join('')}</div></div>`:''}
+  </div><p class="hint">O Caixa só guarda notificações com valor em R$ e palavras como compra, Pix, transferência ou pagamento. Conversas (WhatsApp, Telegram, SMS, e-mail) são ignoradas.</p></section>`}
+function apkSheet(){openSheet(`<h3>Caixa para Android</h3>
+  <p class="hint" style="margin-bottom:12px">No app instalado, o Caixa lê as notificações dos apps de banco (Nubank, PicPay, Mercado Pago, Inter, Itaú e outros) e cria os lançamentos sozinho.</p>
+  <div class="panel pad" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;font-size:14px">
+   <div><b>1.</b> No celular Android, abra a página de download e baixe o arquivo <b>Caixa.apk</b>.</div>
+   <div><b>2.</b> Abra o arquivo. Se o Android pedir, permita "instalar apps desta fonte".</div>
+   <div><b>3.</b> Abra o Caixa, vá em Config e toque em "Ler notificações do banco" para dar o acesso.</div>
+   <div><b>4.</b> Para levar seus dados: aqui, toque em Fazer backup; no app, toque em Restaurar backup.</div></div>
+  <a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="text-decoration:none">${ic('arrow',20)}Abrir página de download</a>
+  <p class="hint" style="margin-top:10px;overflow-wrap:anywhere">Endereço: ${APK_URL}</p>`)}
 /* ================= nuvem (conta do Claude / email) ================= */
 const CLOUD={st:'conn',code:'',id:null,email:'',name:'',col:null,ready:false,pushing:false,dirty:false,hashes:{},timer:null,to:null,last:0,pending:null};
 const DEVICE=(()=>{try{let d=localStorage.getItem('caixa.device');if(!d){d=uid();localStorage.setItem('caixa.device',d)}return d}catch(e){return 'd'+uid()}})();
@@ -1340,7 +1379,7 @@ function cloudSheet(){const on=!!CLOUD.col;
     <div class="btns"><button type="button" class="btn" id="cl-now">${ic('cloud',20)}Sincronizar agora</button></div>
     <div class="btns"><button type="button" class="btn ghost" id="cl-get">Baixar da nuvem de novo</button></div>
     ${CLOUD.st==='choose'?`<div class="btns"><button type="button" class="btn ghost" id="cl-choose">Escolher qual versão manter</button></div>`:''}`
-   :`<div class="panel pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:flex-start"><span style="color:var(--muted)">${ic('cloudoff',26)}</span><div><b>${CLOUD.st==='signed'?'Entre na sua conta do Claude':'Nuvem indisponível neste endereço'}</b><p class="hint" style="margin-top:4px">${CLOUD.st==='signed'?'Faça login no claude.ai com seu email e abra o link do app de novo.':'O salvamento na nuvem funciona quando o app é aberto pelo link do Claude, com sua conta (email). Aberto direto do arquivo ou do GitHub, os dados ficam só neste aparelho.'}</p></div></div>
+   :`<div class="panel pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:flex-start"><span style="color:var(--muted)">${ic('cloudoff',26)}</span><div><b>${CLOUD.st==='signed'?'Entre na sua conta do Claude':'Nuvem indisponível neste endereço'}</b><p class="hint" style="margin-top:4px">${CLOUD.st==='signed'?'Faça login no claude.ai com seu email e abra o link do app de novo.':(AND?'No app Android os dados ficam salvos neste celular. A nuvem funciona no link do Claude, com sua conta (email). Use Fazer backup e Restaurar backup para levar os dados entre os dois.':'O salvamento na nuvem funciona quando o app é aberto pelo link do Claude, com sua conta (email). Aberto direto do arquivo ou do GitHub, os dados ficam só neste aparelho.')}</p></div></div>
     <p class="hint">Enquanto isso, use Fazer backup em Config para guardar uma cópia.</p>`;
   openSheet(`<h3>Salvamento na nuvem</h3>${body}`,sh=>{const q=s=>sh.querySelector(s);
     if(q('#cl-now'))q('#cl-now').onclick=()=>{if(!CLOUD.ready){toast('Ainda conectando à nuvem');return}for(const k in CLOUD.hashes)CLOUD.hashes[k]='';cloudPush().then(()=>{if(CLOUD.st==='ok')toast('Tudo salvo na nuvem')})};
@@ -1407,6 +1446,10 @@ document.addEventListener('click',e=>{
     case 'homecfg':homeSheet();break;
     case 'cloud':cloudSheet();break;
     case 'import':importSheet();break;
+    case 'inbox':importSheet(null,true);break;
+    case 'getapk':apkSheet();break;
+    case 'andaccess':try{AND.openAccess()}catch(e){toast('Abra Configurações > Notificações > Acesso às notificações')}break;
+    case 'unblock':S.settings.blockedApps=(S.settings.blockedApps||[]).filter(x=>x!==v);save();render();break;
     case 'export':exportData();break;
     case 'import':importData();break;
     case 'wipe':armDanger(a,()=>{S=defaults();save();render();toast('Dados apagados')});break;
@@ -1420,13 +1463,15 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
   else if(id==='appname'){S.settings.name=el.value.trim()||'Caixa';save();toast('Nome salvo')}
   else if(id==='hidevals'){S.settings.hide=el.checked;save();render()}
   else if(id==='darkmode'){S.settings.theme=el.checked?'dark':'light';save();render()}
+  else if(id==='autoimp'){S.settings.autoImport=el.checked?'auto':'review';save();toast(el.checked?'Lançamentos claros entram direto':'Tudo passa pela revisão')}
+  else if(id==='andalerts'){try{AND.setAlerts(el.checked)}catch(e){}}
   else if(id==='remtog'){S.settings.reminders=el.checked;save();render()}
   else if(id==='hl'){S.settings.highlight=el.value;save();toast('Destaque salvo')}
   else if(el.dataset&&el.dataset.home){const x=S.settings.home.find(h=>h.id===el.dataset.home);if(x){x.on=el.checked;save()}}
 });
 if(window.matchMedia)matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(S.settings.theme==='system')applyTheme()});
 
-load();render();cloudInit();setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
+load();if(!S.inbox)S.inbox=[];render();cloudInit();andPull();document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 })();
 </script>

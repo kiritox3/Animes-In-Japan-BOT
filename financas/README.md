@@ -14,5 +14,12 @@ Aberto pelo link do Claude, o app salva tudo na sua conta do Claude (seu email) 
 ## Como usar
 Abra `index.html` no navegador. Para instalar no celular como app, publique a pasta numa hospedagem estática (GitHub Pages, por exemplo) e use "Adicionar à tela inicial".
 
+## App para Android
+A pasta `android/` tem o app instalável. Ele abre esta mesma página e tem um serviço que lê as notificações dos apps de banco (com a permissão "Acesso às notificações" do Android). Cada notificação com valor em R$ e uma palavra de transação (compra, Pix, transferência, pagamento...) vira um lançamento, para revisar ou entrar direto. Apps de conversa e e-mail são ignorados.
+
+O APK é gerado pelo GitHub Actions (`.github/workflows/caixa-android.yml`) a cada mudança e publicado na release `caixa-android-latest`. Para gerar localmente, com o Android SDK instalado: `cd android && ./gradlew assembleRelease`.
+
+O arquivo `android/app/caixa.jks` é uma chave de assinatura só para instalação pessoal, fora da Play Store. A senha está no `build.gradle`. Para publicar na Play Store, troque por uma chave privada guardada em segredo.
+
 ## Créditos
 As marcas dos bancos (em uma cor) vêm do pacote `@edusites/bancos-brasil`, licença MIT. Os logotipos são marcas registradas dos respectivos bancos e aparecem só para identificar as contas e os cartões do usuário.

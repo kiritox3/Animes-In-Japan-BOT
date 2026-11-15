@@ -1,0 +1,56 @@
+plugins {
+    id 'com.android.application'
+}
+
+// O app Android usa a mesma página do Caixa (financas/index.html), copiada para os assets no build.
+def webOut = layout.buildDirectory.dir("generated/web")
+tasks.register('copyWeb', Copy) {
+    from("$rootDir/../financas") { include 'index.html', 'icon.svg' }
+    into webOut.map { it.dir("www") }
+}
+
+android {
+    namespace 'app.caixa.financas'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'app.caixa.financas'
+        minSdk 26
+        targetSdk 34
+        versionCode Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
+        versionName "1.0." + (System.getenv('GITHUB_RUN_NUMBER') ?: '0')
+    }
+
+    // Chave de assinatura só para instalação pessoal (fora da Play Store).
+    // A mesma chave em todo build permite instalar atualizações por cima.
+    signingConfigs {
+        caixa {
+            storeFile file('caixa.jks')
+            storePassword 'caixa123'
+            keyAlias 'caixa'
+            keyPassword 'caixa123'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.caixa
+        }
+        debug {
+            signingConfig signingConfigs.caixa
+        }
+    }
+    sourceSets {
+        main { assets.srcDirs += webOut }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+tasks.named('preBuild') { dependsOn 'copyWeb' }
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
