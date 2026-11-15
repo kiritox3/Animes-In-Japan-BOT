@@ -426,6 +426,10 @@ const CAT_ICONS=['home','cart','food','coffee','car','fuel','health','gym','fun'
 const PALETTE=['#9B7BFF','#7C8CFF','#5CC8FF','#38D6C4','#4ADE95','#A3E05B','#F5C451','#FFB65C','#FF8A5C','#FF7B6B','#FF6FA5','#D77DFF','#9D9CAA'];
 const ACCENTS=['#9B7BFF','#7C8CFF','#3B82F6','#22C3E6','#2BC48A','#84CC16','#F5B83D','#FF8A3D','#FF5D5D','#FF5FA2','#C084FC'];
 const GRADS=[['#A24BF5','#6A1FD1'],['#36C98A','#14895A'],['#FF7A1A','#D9480F'],['#2A2A33','#4A4A58'],['#3B82F6','#1E3A8A'],['#E11D74','#8C1650'],['#D4AF37','#8A6D12'],['#14B8A6','#0F766E'],['#E5E5EA','#B9B9C3']];
+const BANKS=[['nubank','Nubank','Nu','#8A05BE','#5B0A8C'],['picpay','PicPay','PP','#21C25E','#0E8A3E'],['mercadopago','Mercado Pago','MP','#00B1EA','#0A6FB8'],['inter','Inter','In','#FF7A00','#D45A00'],['c6','C6 Bank','C6','#2A2A2E','#55555E'],['itau','Itaú','It','#EC7000','#B94F00'],['bradesco','Bradesco','Br','#CC092F','#8E0620'],['santander','Santander','Sa','#EC0000','#A30000'],['bb','Banco do Brasil','BB','#F7D417','#D9A900'],['caixa','Caixa','CX','#0B63B5','#084A8A'],['pagbank','PagBank','PB','#1BB99A','#0E8F76'],['neon','Neon','Ne','#00C4D6','#0090A8'],['next','Next','Nx','#00D775','#00A85B'],['will','Will Bank','Wi','#FFD900','#E0B400'],['sicredi','Sicredi','Si','#3FA110','#2C760A'],['outro','Outro','··','#6E6D7A','#4A4A58']];
+const bankBy=id=>BANKS.find(b=>b[0]===id);
+const inkOn=c=>lum(c)>0.5?'#16151b':'#fff';
+const bankChips=cur=>`<div class="chips" id="bankchips">${BANKS.map(b=>`<button type="button" data-bank="${b[0]}" aria-pressed="${cur===b[0]}"><i style="background:${b[3]};color:${inkOn(b[3])};font-size:10px;font-weight:800;font-style:normal">${b[2]}</i>${b[1]}</button>`).join('')}</div>`;
 const METHODS=[{id:'pix',l:'Pix',i:'bolt'},{id:'credito',l:'Crédito',i:'card'},{id:'debito',l:'Débito',i:'card'},{id:'dinheiro',l:'Dinheiro',i:'money'},{id:'boleto',l:'Boleto',i:'barcode'},{id:'transf',l:'Transferência',i:'swap'}];
 const IN_METHODS=['pix','transf','dinheiro','debito'];
 const methodBy=id=>METHODS.find(m=>m.id===id)||METHODS[0];
@@ -887,6 +891,7 @@ function invoiceSheet(cid,k){const c=cardById(cid);if(!c)return;
 function cardForm(c){const editing=!!c;const gi=S.cards.length%GRADS.length;const d=c?{...c}:{name:'',kind:'credito',last4:'',limit:0,close:3,due:10,color:GRADS[gi][0],color2:GRADS[gi][1],accountId:(S.accounts[0]||{}).id||''};
   if(!d.kind)d.kind='credito';const used=c?S.tx.some(t=>t.card===c.id):false;
   openSheet(`<h3>${editing?'Editar cartão':'Adicionar cartão'}</h3><div id="prev" style="margin-bottom:14px"></div><form class="form" id="cf" novalidate>
+    <div class="field"><span class="lb">Banco</span>${bankChips(d.bank||'')}</div>
     <div class="field"><label for="c-name">Nome do cartão</label><input id="c-name" placeholder="Ex.: Meu Nubank" value="${esc(d.name)}" maxlength="22"></div>
     <div class="field"><span class="lb">Como você usa este cartão?</span><div class="chips">${[['credito','Crédito'],['debito','Débito'],['ambos','Crédito e débito']].map(([k,l])=>`<button type="button" style="padding:9px 16px" data-kd="${k}" aria-pressed="${d.kind===k}">${l}</button>`).join('')}</div></div>
     <div id="w-cr" class="form"><p class="hint">Confira as datas no aplicativo do banco.</p>
@@ -906,16 +911,18 @@ function cardForm(c){const editing=!!c;const gi=S.cards.length%GRADS.length;cons
     const pv=()=>{d.name=$('#c-name').value||'Meu cartão';d.last4=$('#c-last').value.replace(/\D/g,'');$('#prev').innerHTML=cardVisual(d,d.kind==='debito'?'Débito':d.kind==='ambos'?'Crédito e débito':'Crédito');$('#w-cr').hidden=d.kind==='debito'};pv();
     sh.addEventListener('input',e=>{if(e.target.id==='c-c1'){d.color=e.target.value;pressGroup(sh,'[data-g]',null)}if(e.target.id==='c-c2'){d.color2=e.target.value;pressGroup(sh,'[data-g]',null)}pv()});
     sh.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const g=GRADS[+b.dataset.g];d.color=g[0];d.color2=g[1];$('#c-c1').value=g[0];$('#c-c2').value=g[1];pressGroup(sh,'[data-g]',b);pv()});
+    sh.querySelectorAll('[data-bank]').forEach(b=>b.onclick=()=>{const k=bankBy(b.dataset.bank),old=bankBy(d.bank);d.bank=k[0];pressGroup(sh,'[data-bank]',b);const n=$('#c-name');if(k[0]!=='outro'){if(!n.value.trim()||(old&&n.value.trim()===old[1]))n.value=k[1];d.color=k[3];d.color2=k[4];$('#c-c1').value=k[3];$('#c-c2').value=k[4];pressGroup(sh,'[data-g]',null)}pv()});
     sh.querySelectorAll('[data-kd]').forEach(b=>b.onclick=()=>{d.kind=b.dataset.kd;pressGroup(sh,'[data-kd]',b);pv()});
     $('#cf').onsubmit=e=>{e.preventDefault();const name=$('#c-name').value.trim();if(!name){$('#c-name').focus();toast('Dê um nome ao cartão');return}
       const day=v=>Math.max(1,Math.min(31,parseInt(v)||1));
-      const o={name,kind:d.kind,last4:$('#c-last').value.replace(/\D/g,'').slice(0,4),limit:Math.max(0,parseMoney($('#c-limit').value)||0),close:day($('#c-close').value),due:day($('#c-due').value),color:d.color,color2:d.color2,accountId:$('#c-acc').value};
+      const o={name,kind:d.kind,bank:d.bank||'',last4:$('#c-last').value.replace(/\D/g,'').slice(0,4),limit:Math.max(0,parseMoney($('#c-limit').value)||0),close:day($('#c-close').value),due:day($('#c-due').value),color:d.color,color2:d.color2,accountId:$('#c-acc').value};
       if(editing)Object.assign(c,o);else{const id='k_'+uid();S.cards.push({id,...o});psel=id}done(editing?'Cartão salvo':'Cartão adicionado')};
     if(editing)$('#cdel').onclick=e=>armDanger(e.currentTarget,()=>{S.tx=S.tx.filter(t=>!(t.card===c.id&&isCredit(t)));S.cards=S.cards.filter(x=>x.id!==c.id);for(const k in S.paidInv)if(k.startsWith(c.id+'|'))delete S.paidInv[k];done('Cartão excluído')})})}
 
 /* ----- conta ----- */
-function accForm(a){const editing=!!a;let color=a?a.color:PALETTE[S.accounts.length%PALETTE.length];
+function accForm(a){const editing=!!a;let color=a?a.color:PALETTE[S.accounts.length%PALETTE.length],bank=a?a.bank||'':'';
   openSheet(`<h3>${editing?'Editar conta':'Nova conta'}</h3><form class="form" id="af" novalidate>
+    <div class="field"><span class="lb">Banco ou carteira</span>${bankChips(bank)}</div>
     <div class="field"><label for="a-name">Nome</label><input id="a-name" value="${esc(a?a.name:'')}" placeholder="Ex.: Conta Nubank, Carteira" maxlength="28"></div>
     <div class="field"><label for="a-kind">Tipo</label>${sel('a-kind',Object.entries(ACC_KINDS),a?a.kind:'corrente')}</div>
     <div class="field"><label for="a-bal">Saldo atual</label><input id="a-bal" inputmode="decimal" placeholder="0,00" value="${a?toInput(accBalance(a)):''}"><p class="hint">Digite o saldo que aparece no banco hoje. O app ajusta o resto.</p></div>
@@ -925,9 +932,10 @@ function accForm(a){const editing=!!a;let color=a?a.color:PALETTE[S.accounts.len
     ${editing&&S.accounts.length>1?`<div class="btns"><button type="button" class="btn danger" id="adel">${ic('trash',18)}Excluir conta</button></div>`:''}</form>`,sh=>{
     const $=s=>sh.querySelector(s);
     sh.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{color=b.dataset.c;pressGroup(sh,'[data-c]',b)});
+    sh.querySelectorAll('[data-bank]').forEach(b=>b.onclick=()=>{const k=bankBy(b.dataset.bank),old=bankBy(bank);bank=k[0];pressGroup(sh,'[data-bank]',b);const n=$('#a-name');if(k[0]!=='outro'){if(!n.value.trim()||(old&&n.value.trim()===old[1]))n.value=k[1];color=k[3];pressGroup(sh,'[data-c]',null)}});
     $('#af').onsubmit=e=>{e.preventDefault();const name=$('#a-name').value.trim();if(!name){$('#a-name').focus();toast('Dê um nome à conta');return}
       let bal=parseMoney($('#a-bal').value);if(isNaN(bal))bal=0;
-      const o={name,kind:$('#a-kind').value,color,include:$('#a-inc').checked};
+      const o={name,kind:$('#a-kind').value,color,bank,include:$('#a-inc').checked};
       if(editing){Object.assign(a,o);a.initial=(a.initial||0)+(bal-accBalance(a))}else S.accounts.push({id:'a_'+uid(),...o,initial:bal});
       done(editing?'Conta salva':'Conta adicionada')};
     const del=$('#adel');if(del)del.onclick=e=>armDanger(e.currentTarget,()=>{const other=S.accounts.find(x=>x.id!==a.id);S.tx.forEach(t=>{if(t.accountId===a.id)t.accountId=other.id});for(const k in S.paidInv)if(S.paidInv[k].acc===a.id)S.paidInv[k].acc=other.id;S.cards.forEach(c=>{if(c.accountId===a.id)c.accountId=other.id});S.accounts=S.accounts.filter(x=>x.id!==a.id);done(`Conta excluída. Lançamentos movidos para ${other.name}`)})})}
@@ -1069,7 +1077,7 @@ function pcContas(){
      <div style="margin-top:10px;font-size:13px;opacity:.9">Total: <b class="num">${fmt(tot)}</b></div></div>
     <div class="macts"><button type="button" class="glass" data-act="transfer"><i>${ic('swap',20)}</i>Transferir</button><button type="button" class="glass" data-act="newacc"><i>${ic('plus',20)}</i>Nova conta</button><button type="button" class="glass" data-act="reminders"><i>${ic('bell',20)}</i>Lembretes</button></div></div>
   <section><div class="sec-h"><h2>Suas contas</h2><span class="sub">Toque para ver o extrato</span></div>
-   <div class="panel list">${accs.map(({a,b})=>`<button type="button" class="row" data-act="extrato" data-id="${a.id}"><span class="sq" style="background:${a.color}">${esc(a.name.slice(0,2))}</span><span class="main"><span class="t">${esc(a.name)}</span><span class="s">${ACC_KINDS[a.kind]||''}${a.include===false?' · fora do total':''}</span></span><span class="amt"><span class="num ${b<0?'neg':''}">${fmt(b)}</span><span class="s muted" style="font-size:12px">${a.include===false?'—':pct(b)+'% do total'}</span></span></button>`).join('')}</div></section>
+   <div class="panel list">${accs.map(({a,b})=>`<button type="button" class="row" data-act="extrato" data-id="${a.id}"><span class="sq" style="background:${a.color};color:${inkOn(a.color)}">${esc(a.bank&&a.bank!=='outro'?bankBy(a.bank)[2]:a.name.slice(0,2))}</span><span class="main"><span class="t">${esc(a.name)}</span><span class="s">${ACC_KINDS[a.kind]||''}${a.include===false?' · fora do total':''}</span></span><span class="amt"><span class="num ${b<0?'neg':''}">${fmt(b)}</span><span class="s muted" style="font-size:12px">${a.include===false?'—':pct(b)+'% do total'}</span></span></button>`).join('')}</div></section>
   <section><div class="panel pad" style="display:flex;flex-direction:column;gap:12px">
     <div style="display:flex;align-items:center;gap:12px"><span class="cico" style="background:color-mix(in srgb,var(--in) 16%,transparent);color:var(--in)">${ic('trend',22)}</span><div style="flex:1;min-width:0"><b style="font-family:var(--font-num);font-size:19px">Minhas rendas</b><div class="sub">${S.incomes.length} fonte${S.incomes.length===1?'':'s'} · ${fmt(incTot)}/mês</div></div><button type="button" class="link" data-act="newinc">Nova ${ic('plus',16,2.4)}</button></div>
     ${nx?`<div style="display:flex;justify-content:space-between;gap:10px;background:var(--raised);border-radius:14px;padding:12px 14px;font-size:14px"><span class="muted" style="display:flex;gap:8px;align-items:center;min-width:0">${ic('cal',18)}Próximo: ${esc(nx.r.name)} · ${dShort(nx.d)}</span><b class="num">${fmt(nx.r.amount)}</b></div>`:'<p class="hint">Cadastre salário e outras rendas fixas. Todo mês o app lança a entrada como "a receber" e lembra você de confirmar.</p>'}
