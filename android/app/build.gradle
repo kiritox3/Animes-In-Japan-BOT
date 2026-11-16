@@ -5,24 +5,26 @@ plugins {
 // O app Android usa a mesma página do Caixa (financas/index.html), copiada para os assets no build.
 def webOut = layout.buildDirectory.dir("generated/web")
 tasks.register('copyWeb', Copy) {
-    from("$rootDir/../financas") { include 'index.html', 'icon.svg' }
+    from("$rootDir/../financas") { include 'index.html', 'icon.svg', 'privacidade.html', 'vendor/**' }
     into webOut.map { it.dir("www") }
 }
 
 android {
     namespace 'app.caixa.financas'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId 'app.caixa.financas'
         minSdk 26
-        targetSdk 34
+        targetSdk 36
         versionCode Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
         versionName "1.0." + (System.getenv('GITHUB_RUN_NUMBER') ?: '0')
     }
 
-    // Chave de assinatura só para instalação pessoal (fora da Play Store).
-    // A mesma chave em todo build permite instalar atualizações por cima.
+    // Assinatura. Para a Play Store, a chave vem dos segredos do GitHub (veja PUBLICAR.md):
+    // CAIXA_KEYSTORE_FILE, CAIXA_KEYSTORE_PASSWORD, CAIXA_KEY_ALIAS, CAIXA_KEY_PASSWORD.
+    // Sem eles, usa a chave de teste do repositório (serve só para instalar por fora da loja).
+    def ksFile = System.getenv('CAIXA_KEYSTORE_FILE')
     signingConfigs {
         caixa {
             storeFile file('caixa.jks')
@@ -30,11 +32,19 @@ android {
             keyAlias 'caixa'
             keyPassword 'caixa123'
         }
+        upload {
+            if (ksFile) {
+                storeFile file(ksFile)
+                storePassword System.getenv('CAIXA_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('CAIXA_KEY_ALIAS')
+                keyPassword System.getenv('CAIXA_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.caixa
+            signingConfig ksFile ? signingConfigs.upload : signingConfigs.caixa
         }
         debug {
             signingConfig signingConfigs.caixa
@@ -52,5 +62,6 @@ android {
 tasks.named('preBuild') { dependsOn 'copyWeb' }
 
 dependencies {
-    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
+    implementation 'com.android.billingclient:billing:8.3.0'
 }

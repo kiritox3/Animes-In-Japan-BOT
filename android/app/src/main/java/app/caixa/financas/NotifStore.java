@@ -6,12 +6,12 @@ import android.content.SharedPreferences;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Fila das notificações capturadas, guardada no celular até a página do Caixa ler. */
+/** Fila das notificações capturadas, guardada no celular até a página do app ler. */
 final class NotifStore {
     private static final String PREFS = "caixa_notifs";
     private static final String QUEUE = "queue";
     private static final String SEEN = "seen";
-    private static final int MAX_QUEUE = 200;
+    private static final int MAX_QUEUE = 300;
     private static final long DEDUPE_MS = 15 * 60 * 1000L;
 
     /** Chamado quando chega notificação nova com o app aberto. */
@@ -19,12 +19,12 @@ final class NotifStore {
 
     private NotifStore() {}
 
-    private static SharedPreferences prefs(Context c) {
+    static SharedPreferences prefs(Context c) {
         return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
-    /** Guarda a notificação. Devolve false se é repetida (o Android reenvia atualizações). */
-    static synchronized boolean add(Context c, String pkg, String app, String text, long time) {
+    /** Guarda a notificação. Devolve o item salvo, ou null se é repetida (o Android reenvia atualizações). */
+    static synchronized JSONObject add(Context c, String pkg, String app, String text, long time, JSONObject parsed, boolean auto) {
         SharedPreferences p = prefs(c);
         try {
             String key = pkg + "|" + text.trim();
@@ -34,20 +34,43 @@ final class NotifStore {
             for (int i = 0; i < seen.length(); i++) {
                 JSONObject s = seen.getJSONObject(i);
                 if (now - s.optLong("t") > DEDUPE_MS) continue;
-                if (key.equals(s.optString("k"))) return false;
+                if (key.equals(s.optString("k"))) return null;
                 keep.put(s);
             }
             keep.put(new JSONObject().put("k", key).put("t", now));
 
-            JSONArray q = new JSONArray(p.getString(QUEUE, "[]"));
-            q.put(new JSONObject()
+            JSONObject item = new JSONObject()
+                    .put("id", Long.toString(now, 36) + Integer.toString((int) (Math.random() * 1e6), 36))
                     .put("pkg", pkg)
                     .put("app", app)
                     .put("text", text)
-                    .put("time", time));
+                    .put("time", time)
+                    .put("auto", auto);
+            if (parsed != null) item.put("parsed", parsed);
+            JSONArray q = new JSONArray(p.getString(QUEUE, "[]"));
+            q.put(item);
             while (q.length() > MAX_QUEUE) q.remove(0);
             p.edit().putString(QUEUE, q.toString()).putString(SEEN, keep.toString()).apply();
-            return true;
+            return item;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Tira um item da fila (botão "Desfazer" do aviso). */
+    static synchronized boolean remove(Context c, String id) {
+        SharedPreferences p = prefs(c);
+        try {
+            JSONArray q = new JSONArray(p.getString(QUEUE, "[]"));
+            JSONArray out = new JSONArray();
+            boolean found = false;
+            for (int i = 0; i < q.length(); i++) {
+                JSONObject o = q.getJSONObject(i);
+                if (id.equals(o.optString("id"))) { found = true; continue; }
+                out.put(o);
+            }
+            p.edit().putString(QUEUE, out.toString()).apply();
+            return found;
         } catch (Exception e) {
             return false;
         }
@@ -69,13 +92,12 @@ final class NotifStore {
         }
     }
 
-    static boolean alertsOn(Context c) {
-        return prefs(c).getBoolean("alerts", true);
-    }
+    static boolean alertsOn(Context c) { return prefs(c).getBoolean("alerts", true); }
+    static void setAlerts(Context c, boolean on) { prefs(c).edit().putBoolean("alerts", on).apply(); }
 
-    static void setAlerts(Context c, boolean on) {
-        prefs(c).edit().putBoolean("alerts", on).apply();
-    }
+    /** Modo automático: anota sem revisão (recurso Premium). A página informa o estado. */
+    static boolean autoOn(Context c) { return prefs(c).getBoolean("auto", false) && Billing.isPremium(c); }
+    static void setAuto(Context c, boolean on) { prefs(c).edit().putBoolean("auto", on).apply(); }
 
     static void ping() {
         Runnable r = listener;

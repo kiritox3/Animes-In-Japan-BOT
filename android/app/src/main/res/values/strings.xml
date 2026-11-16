@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Troque aqui o nome público do app. -->
+    <string name="app_name">Caixa</string>
+    <string name="listener_label">Leitura das notificações do banco</string>
+    <string name="channel_capturas">Lançamentos anotados</string>
+</resources>

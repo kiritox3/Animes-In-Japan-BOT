@@ -8,7 +8,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:label="Caixa"
+        android:label="@string/app_name"
         android:theme="@style/AppTheme">
 
         <activity
@@ -25,12 +25,15 @@
 
         <service
             android:name=".NotifListener"
-            android:label="Caixa: ler notificações do banco"
+            android:label="@string/listener_label"
             android:exported="true"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <receiver
+            android:name=".UndoReceiver"
+            android:exported="false" />
     </application>
 </manifest>

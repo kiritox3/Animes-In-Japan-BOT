@@ -274,6 +274,26 @@ textarea.out{width:100%;min-height:120px;border:1px solid var(--line);background
 .goal .track i{background:var(--in)}
 .toast{position:fixed;left:50%;bottom:calc(160px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:13px;font-weight:700;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
+/* premium */
+.pwhead{margin:-8px -18px 14px;padding:22px 18px 18px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 70%,#000),var(--accent));color:var(--on-accent);border-radius:24px 24px 0 0}
+.pwhead h3{font-size:26px}
+.pwbadge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px}
+.pwlist{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.pwf{display:flex;gap:12px;align-items:flex-start}
+.pwf b{display:block}
+.pwf small{color:var(--muted);font-size:13px}
+.plans{display:flex;flex-direction:column;gap:10px}
+.plan{display:flex;justify-content:space-between;align-items:center;gap:12px;border:2px solid var(--line);background:var(--sunk);border-radius:16px;padding:14px 16px;text-align:left}
+.plan b{font-size:16px}
+.plan small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.plan.best{border-color:var(--accent);background:var(--accent-soft)}
+.lockcard{display:flex;align-items:center;gap:12px;padding:16px;width:100%;text-align:left;border:1px dashed color-mix(in srgb,var(--accent) 50%,var(--line))}
+.lockcard .n{flex:1;min-width:0;display:flex;flex-direction:column}
+.lockcard small{color:var(--muted);font-size:13px}
+.policy h1{font-family:var(--font-num);font-size:22px;margin:0 0 6px}
+.policy h2{font-size:16px;margin:18px 0 6px}
+.policy p,.policy li{font-size:14px;line-height:1.55;color:var(--ink)}
+.policy ul{padding-left:20px}
 /* importar notificações */
 .nitem{border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--sunk)}
 .nitem.off{opacity:.55}
@@ -573,7 +593,8 @@ function applyTheme(){const r=document.documentElement,t=S.settings.theme;
   r.classList.toggle('light',!!light);r.style.setProperty('--accent',S.settings.accent);
   try{nf=new Intl.NumberFormat('pt-BR',{style:'currency',currency:S.settings.currency||'BRL'})}catch(e){}
   r.style.setProperty('--on-accent',lum(S.settings.accent)>0.42?'#121016':'#FFFFFF');
-  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=light?'#F4F3F8':'#0D0D10'}
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=light?'#F4F3F8':'#0D0D10';
+  if(AND){try{AND.setBars(light?'#F4F3F8':'#0D0D10',!!light)}catch(e){}}}
 const TABS=[['inicio','Início','home'],['gastos','Gastos','receipt'],['analises','Análises','bars'],['config','Config','gear']];
 function render(){applyTheme();
   document.getElementById('tabs').innerHTML=TABS.map(([id,l,i])=>`<button type="button" class="tab" data-tab="${id}" aria-current="${tab===id?'page':'false'}">${ic(i,24,tab===id?2.3:1.9)}${l}</button>`).join('');
@@ -741,6 +762,7 @@ function vAnalises(){
     <div class="legend">${ent.map(([id,v])=>{const c=catById(id);return `<button type="button" data-act="catfilter" data-id="${id}"><span class="sw" style="background:${c.color};border-radius:50%"></span><span>${esc(c.name)}</span><span class="num"><b>${Math.round(v/tot*100)}%</b> <span class="muted">${fmt(v)}</span></span></button>`}).join('')}</div></div>`}
   body+=`<section><div class="sec-h"><h2>Por categoria</h2></div><div class="panel pad">${donut}</div></section>`;
   body+=`<section><div class="sec-h"><h2>Últimos 6 meses</h2></div><div class="panel pad chartbox">${chart6()}</div></section>`;
+  if(!prem()){body+=lockedCard('analises','Mais análises no Premium','Gasto por dia, formas de pagamento, faturas e maiores gastos.');return[h,body]}
   body+=`<section><div class="sec-h"><h2>Gasto por dia</h2></div><div class="panel pad chartbox">${chartDays()}</div></section>`;
   // método
   const bm={};S.tx.forEach(t=>{if(t.type==='out'&&monthOfTx(t)===M)bm[t.method]=(bm[t.method]||0)+t.amount});
@@ -781,6 +803,7 @@ function vConfig(){const st=S.settings,u=st.user||{};
   ${demoBanner()}
   ${autoSection()}
   <section><p class="grp">Nuvem</p><div class="panel cfg"><button type="button" class="cfgrow" data-act="cloud"><span class="cico" style="background:color-mix(in srgb,#5CC8FF 18%,transparent)">${cloudIco()}</span><span class="n"><b>Salvamento na nuvem</b><small data-cloudtxt>${cloudSub()}</small></span>${ic('right',18)}</button></div></section>
+  ${AND?`<section><div class="panel cfg">${premRow()}</div></section>`:''}
   <section><p class="grp">Organização</p><div class="panel cfg">
     ${crow('bell','#F5C451','Importar notificações do banco','Cole o texto e vira lançamento','data-act="import"')}
     ${crow('wallet','var(--in)','Minhas contas','Contas, cartões, faturas e reservas','data-act="accounts"')}
@@ -799,6 +822,8 @@ function vConfig(){const st=S.settings,u=st.user||{};
   </div></section>
   <section><p class="grp">Seus dados</p><div class="panel cfg">
     ${crow('db','#5CC8FF','Fazer backup','Exporta tudo em um arquivo','data-act="export"')}
+    ${crow('receipt','#4ADE95','Exportar planilha (CSV)'+(prem()?'':' · Premium'),'Para Excel ou Google Planilhas','data-act="csv"')}
+    ${crow('lock','#9D9CAA','Política de privacidade','Como seus dados são usados','data-act="privacy"')}
     ${crow('swap','#38D6C4','Restaurar backup','','data-act="import"')}
     ${crow('layers','#9D9CAA','Carregar dados de exemplo','Substitui os dados atuais','data-act="loaddemo"','')}
     ${crow('trash','var(--out)','<span class="neg">Apagar todos os dados</span>','','data-act="wipe"','')}</div>
@@ -980,7 +1005,7 @@ function catForm(c,type){const editing=!!c;const d=c?{...c}:{type:type||'out',na
     $('#k-emoji').oninput=e=>{d.emoji=e.target.value.trim();pv()};
     $('#kf').onsubmit=e=>{e.preventDefault();const name=$('#k-name').value.trim();if(!name){$('#k-name').focus();toast('Dê um nome à categoria');return}
       const o={name,icon:d.icon,color:d.color,emoji:d.emoji||''};let id;if(editing){Object.assign(c,o);id=c.id}else{id='c_'+uid();S.cats.push({id,type:d.type,subs:[],...o})}
-      const bi=$('#k-bud');if(bi){const v=parseMoney(bi.value);if(v>0)S.plan.budgets[id]=v;else delete S.plan.budgets[id]}
+      const bi=$('#k-bud');if(bi){const v=parseMoney(bi.value);if(v>0&&!S.plan.budgets[id]&&Object.keys(S.plan.budgets).length>=FREE.budgets&&!prem()){save();closeSheet();paywall('limites');return}if(v>0)S.plan.budgets[id]=v;else delete S.plan.budgets[id]}
       done(editing?'Categoria salva':'Categoria adicionada')};
     const del=$('#kdel');if(del)del.onclick=e=>armDanger(e.currentTarget,()=>{const other=catsOf(c.type).find(x=>x.id!==c.id&&x.name==='Outros')||catsOf(c.type).find(x=>x.id!==c.id);S.tx.forEach(t=>{if(t.catId===c.id)t.catId=other.id});delete S.plan.budgets[c.id];S.cats=S.cats.filter(x=>x.id!==c.id);done('Categoria excluída')})})}
 
@@ -994,7 +1019,7 @@ function planSheet(){const by=catSpend(CM),spent=monthOut(CM).total,inc=monthIn(
     <div class="sec-h" style="margin:22px 0 10px"><h2>Metas de economia</h2><button type="button" class="link" data-act="newgoal">Nova ${ic('plus',16,2.4)}</button></div>
     <div class="panel list">${S.plan.goals.length?S.plan.goals.map(goalRow).join(''):'<div class="empty">Nenhuma meta ainda.</div>'}</div>`,sh=>{
     sh.querySelector('#pf').onsubmit=e=>{e.preventDefault();const l=parseMoney(sh.querySelector('#p-lim').value);S.plan.limit=l>0?l:0;
-      sh.querySelectorAll('[data-bud]').forEach(i=>{const v=parseMoney(i.value);if(v>0)S.plan.budgets[i.dataset.bud]=v;else delete S.plan.budgets[i.dataset.bud]});done('Planejamento salvo')}})}
+      const nb={};sh.querySelectorAll('[data-bud]').forEach(i=>{const v=parseMoney(i.value);if(v>0)nb[i.dataset.bud]=v});if(Object.keys(nb).length>FREE.budgets&&!prem()){paywall('limites');return}S.plan.budgets=nb;done('Planejamento salvo')}})}
 function goalForm(g){const editing=!!g;
   openSheet(`<h3>${editing?'Editar meta':'Nova meta'}</h3><form class="form" id="gf" novalidate>
     <div class="field"><label for="g-name">Nome da meta</label><input id="g-name" value="${esc(g?g.name:'')}" placeholder="Ex.: Reserva, viagem, celular novo"></div>
@@ -1052,7 +1077,7 @@ function filterSheet(){const tp=gmode;
 
 /* ----- backup ----- */
 async function exportData(){const json=JSON.stringify(S);const fn='caixa-backup-'+TODAY+'.json';
-  if(AND){let where='';try{where=AND.saveFile(fn,json)}catch(e){}if(where){openSheet(`<h3>Backup salvo</h3><p class="hint" style="margin-bottom:14px">Arquivo salvo em <b>${esc(where)}</b>. Para levar a outro aparelho ou guardar no Drive, toque em Compartilhar.</p><div class="btns"><button type="button" class="btn" id="bk-share">Compartilhar backup</button></div>`,sh=>{sh.querySelector('#bk-share').onclick=()=>{try{AND.shareText('Backup do Caixa',json)}catch(e){}}});return}}
+  if(AND){let where='';try{where=AND.saveFile(fn,json,'application/json')}catch(e){}if(where){openSheet(`<h3>Backup salvo</h3><p class="hint" style="margin-bottom:14px">Arquivo salvo em <b>${esc(where)}</b>. Para levar a outro aparelho ou guardar no Drive, toque em Compartilhar.</p><div class="btns"><button type="button" class="btn" id="bk-share">Compartilhar backup</button></div>`,sh=>{sh.querySelector('#bk-share').onclick=()=>{try{AND.shareText('Backup do Caixa',json)}catch(e){}}});return}}
   try{const dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;if(dl){await dl.save({filename:fn,data:new Blob([json],{type:'application/json'})});toast('Backup salvo');return}}catch(e){if(e&&e.code&&e.code!=='unavailable'&&e.code!=='not_granted'){}}
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));a.download=fn;document.body.appendChild(a);a.click();a.remove()}catch(e){}
   openSheet(`<h3>Backup</h3><p class="hint" style="margin-bottom:10px">Se o download não começou, copie o texto abaixo e guarde em um lugar seguro.</p><textarea class="out" id="bk" readonly>${esc(json)}</textarea><div class="btns"><button type="button" class="btn" id="cp">Copiar backup</button></div>`,sh=>{
@@ -1216,7 +1241,7 @@ function subsSheet(cid){const cur=catById(cid||(S.cats[0]||{}).id);
     $('#sbf').onsubmit=e=>{e.preventDefault();const v=$('#sb-n').value.trim();if(!v)return;cur.subs=cur.subs||[];if(cur.subs.some(x=>x.toLowerCase()===v.toLowerCase())){toast('Já existe');return}cur.subs.push(v);save();subsSheet(cur.id);toast('Subcategoria adicionada')}})}
 function currencySheet(){openSheet(`<h3>Moeda</h3><div class="panel cfg">${CURS.map(([k,l])=>`<button type="button" class="cfgrow" data-act="setcur" data-v="${k}"><span class="n"><b>${l}</b><small>${k}</small></span>${S.settings.currency===k?`<span style="color:var(--accent-text)">${ic('check',22,2.6)}</span>`:''}</button>`).join('')}</div><p class="hint" style="margin-top:10px">Muda só o símbolo e o formato. Os valores não são convertidos.</p>`)}
 function colorSheet(){const st=S.settings;const custom=!ACCENTS.some(c=>c.toLowerCase()===st.accent.toLowerCase());
-  openSheet(`<h3>Cor do app</h3><div class="swatches" style="gap:12px">${ACCENTS.map(c=>`<button type="button" data-act="accent" data-v="${c}" style="background:${c};width:48px;height:48px;border-radius:16px" aria-label="Cor ${c}" aria-pressed="${st.accent.toLowerCase()===c.toLowerCase()}"></button>`).join('')}<label title="Outra cor" style="width:48px;height:48px;border-radius:16px;${custom?`background:${st.accent};border-style:solid;border-color:var(--ink)`:''}">${ic('plus',18)}<input type="color" id="accentpick" value="${st.accent}" aria-label="Escolher outra cor"></label></div>
+  openSheet(`<h3>Cor do app</h3><div class="swatches" style="gap:12px">${ACCENTS.map(c=>`<button type="button" data-act="accent" data-v="${c}" style="background:${c};width:48px;height:48px;border-radius:16px" aria-label="Cor ${c}" aria-pressed="${st.accent.toLowerCase()===c.toLowerCase()}"></button>`).join('')}${prem()?`<label title="Outra cor" style="width:48px;height:48px;border-radius:16px;${custom?`background:${st.accent};border-style:solid;border-color:var(--ink)`:''}">${ic('plus',18)}<input type="color" id="accentpick" value="${st.accent}" aria-label="Escolher outra cor"></label>`:`<button type="button" data-act="premium" data-v="cor" title="Outra cor (Premium)" aria-label="Outra cor, Premium" style="width:48px;height:48px;border-radius:16px;border:2px dashed var(--line);background:none;color:var(--muted);display:grid;place-items:center">${ic('lock',18)}</button>`}</div>
    <p class="hint" style="margin-top:12px">O último botão abre o seletor para qualquer cor.</p><div class="btns" style="margin-top:14px"><button type="button" class="btn" id="col-ok">Pronto</button></div>`,sh=>{sh.querySelector('#col-ok').onclick=()=>closeSheet()})}
 function homeSheet(){const st=S.settings;
   openSheet(`<h3>Tela inicial</h3><p class="hint" style="margin-bottom:10px">Escolha o que aparece e em que ordem.</p><div class="panel cfg">${st.home.map((x,k)=>{const lab=(HOME.find(h=>h[0]===x.id)||[])[1];return `<div class="cfgrow"><span class="n"><b>${lab}</b></span><span class="tools"><button type="button" data-act="hmove" data-i="${k}" data-d="-1" ${k===0?'disabled':''} aria-label="Subir">${ic('up',18)}</button><button type="button" data-act="hmove" data-i="${k}" data-d="1" ${k===st.home.length-1?'disabled':''} aria-label="Descer">${ic('down',18)}</button></span><input type="checkbox" class="toggle" data-home="${x.id}" ${x.on?'checked':''} aria-label="Mostrar ${lab}"></div>`}).join('')}</div>
@@ -1275,7 +1300,7 @@ function importSheet(prefill,inbox){let items=inbox?(S.inbox||[]).slice():[];
     sh.addEventListener('click',e=>{const b=e.target.closest('[data-ntype]');if(b){const it=items[+b.closest('.nitem').dataset.i];if(it.type===b.dataset.ntype)return;it.type=b.dataset.ntype;
         if(it.type==='in'&&!IN_METHODS.includes(it.method))it.method='pix';const c=catsOf(it.type);it.catId=(c.find(x=>x.name==='Outros')||c[0]||{}).id||'';draw();return}
       const bk=e.target.closest('[data-block]');if(bk){const pkg=bk.dataset.block,it0=items.find(x=>x.pkg===pkg);S.settings.blockedApps=[...new Set([...(S.settings.blockedApps||[]),pkg])];S.settings.appNames=Object.assign(S.settings.appNames||{},{[pkg]:it0&&it0.app||pkg});
-        items=items.filter(x=>x.pkg!==pkg);S.inbox=(S.inbox||[]).filter(x=>x.pkg!==pkg);save();draw();toast('Não vou mais ler '+(it0&&it0.app||'esse app'));return}
+        items=items.filter(x=>x.pkg!==pkg);S.inbox=(S.inbox||[]).filter(x=>x.pkg!==pkg);save();draw();syncNative();toast('Não vou mais ler '+(it0&&it0.app||'esse app'));return}
       if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);ok.forEach(addParsed);const n=ok.length;
         if(inbox){const ids=new Set(items.map(x=>x.id));S.inbox=(S.inbox||[]).filter(x=>!ids.has(x.id))}
         done(n?n+' lançamento'+(n===1?'':'s')+' adicionado'+(n===1?'':'s'):'Descartados')}})})}
@@ -1291,7 +1316,7 @@ function andPull(){if(!AND)return;let arr=[];try{arr=JSON.parse(AND.pull()||'[]'
   const blocked=S.settings.blockedApps||[];S.inbox=S.inbox||[];let added=0,queued=0;
   arr.forEach(n=>{if(!n||!n.text||blocked.includes(n.pkg))return;const it=nParse(n.text);if(!it)return;
     if(n.time&&it.date===TODAY)it.date=ymdOf(n.time);it.app=n.app||'';it.pkg=n.pkg||'';it.src=n.text.replace(/\s+/g,' ');
-    if(S.settings.autoImport==='auto'&&!it.dup&&!it.low){addParsed(it);added++}else{S.inbox.push(it);queued++}});
+    if((n.auto||S.settings.autoImport==='auto')&&prem()&&!it.dup&&!it.low){addParsed(it);added++}else{S.inbox.push(it);queued++}});
   if(!added&&!queued)return;save();if(!scrim)render();
   toast(added&&queued?`${added} adicionado${added>1?'s':''}, ${queued} para revisar`:added?`${added} lançamento${added>1?'s':''} adicionado${added>1?'s':''} das notificações`:`${queued} lançamento${queued>1?'s':''} para revisar`)}
 window.caixaNotif=andPull;
@@ -1301,11 +1326,11 @@ function sInbox(){const n=(S.inbox||[]).length;if(!n)return'';
 function autoSection(){if(!AND)return `<section><p class="grp">App para Android</p><div class="panel cfg">${crow('phone','#4ADE95','Instalar no Android','Lê as notificações do banco sozinho','data-act="getapk"')}</div></section>`;
   let ok=false;try{ok=AND.hasAccess()}catch(e){}let al=true;try{al=AND.alertsOn()}catch(e){}const bl=S.settings.blockedApps||[];
   return `<section><p class="grp">Leitura automática</p><div class="panel cfg">
-   ${crow('bell',ok?'var(--in)':'var(--warn)','Ler notificações do banco',ok?'Ativada: gastos e entradas entram sozinhos':'Desativada. Toque para permitir o acesso às notificações','data-act="andaccess"',ok?`<span class="st ok">Ativa</span>`:`<span class="st wait">Permitir</span>`)}
-   ${crow('check','#9B7BFF','Adicionar sem revisar','Lançamentos claros entram direto. Os duvidosos ou repetidos sempre vão para revisão.','',`<input type="checkbox" class="toggle" id="autoimp" ${S.settings.autoImport==='auto'?'checked':''} aria-label="Adicionar sem revisar">`)}
+   ${crow('bell',ok?'var(--in)':'var(--warn)','Ler notificações do banco',ok?'Ativada':'Desativada. Toque para permitir o acesso às notificações','data-act="andaccess"',ok?`<span class="st ok">Ativa</span>`:`<span class="st wait">Permitir</span>`)}
+   ${crow('bolt','#9B7BFF','Anotar automaticamente'+(prem()?'':' · Premium'),prem()?'Gastos e entradas claros são anotados direto, mesmo com o app fechado. Os duvidosos ou repetidos vão para revisão.':'No grátis, cada notificação fica para você revisar. No Premium, é anotada sozinha.','',`<input type="checkbox" class="toggle" id="autoimp" ${S.settings.autoImport==='auto'&&prem()?'checked':''} aria-label="Anotar automaticamente">`)}
    ${crow('bell','#F5C451','Avisar quando capturar','Mostra um aviso do Caixa com o valor capturado','',`<input type="checkbox" class="toggle" id="andalerts" ${al?'checked':''} aria-label="Avisar quando capturar">`)}
    ${bl.length?`<div class="cfgrow" style="flex-direction:column;align-items:stretch;gap:8px"><span class="n"><b>Apps ignorados</b><small>Toque para voltar a ler</small></span><div class="subline">${bl.map(p=>`<span class="x">${esc((S.settings.appNames||{})[p]||p)}<button type="button" data-act="unblock" data-v="${esc(p)}" aria-label="Voltar a ler">${ic('x',14,2.4)}</button></span>`).join('')}</div></div>`:''}
-  </div><p class="hint">O Caixa só guarda notificações com valor em R$ e palavras como compra, Pix, transferência ou pagamento. Conversas (WhatsApp, Telegram, SMS, e-mail) são ignoradas.</p></section>`}
+  </div><p class="hint">O app só guarda notificações com valor em R$ e palavras como compra, Pix, transferência ou pagamento. Conversas (WhatsApp, Telegram, SMS, e-mail) são ignoradas.</p></section>`}
 function apkSheet(){openSheet(`<h3>Caixa para Android</h3>
   <p class="hint" style="margin-bottom:12px">No app instalado, o Caixa lê as notificações dos apps de banco (Nubank, PicPay, Mercado Pago, Inter, Itaú e outros) e cria os lançamentos sozinho.</p>
   <div class="panel pad" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;font-size:14px">
@@ -1315,12 +1340,141 @@ function apkSheet(){openSheet(`<h3>Caixa para Android</h3>
    <div><b>4.</b> Para levar seus dados: aqui, toque em Fazer backup; no app, toque em Restaurar backup.</div></div>
   <a class="btn" href="${APK_URL}" target="_blank" rel="noopener" style="text-decoration:none">${ic('arrow',20)}Abrir página de download</a>
   <p class="hint" style="margin-top:10px;overflow-wrap:anywhere">Endereço: ${APK_URL}</p>`)}
+/* ================= Premium (assinatura pelo Google Play) ================= */
+const PREM={on:false,products:null,msg:''};
+const FREE={accounts:2,cards:2,goals:1,budgets:3};
+// No app público (Android) os recursos Premium dependem da assinatura. No link pessoal fica tudo liberado.
+const prem=()=>!AND||PREM.on;
+function premInit(){if(!AND)return;try{PREM.on=!!AND.isPremium()}catch(e){}syncNative()}
+function syncNative(){if(!AND)return;try{AND.setAuto(S.settings.autoImport==='auto'&&prem())}catch(e){}try{AND.setBlocked(JSON.stringify(S.settings.blockedApps||[]))}catch(e){}}
+window.caixaBilling=json=>{let d={};try{d=JSON.parse(json)}catch(e){return}
+  if(d.products){PREM.products=d.products;PREM.msg='';drawPlans()}
+  if(d.status==='unavailable'){PREM.msg=d.message||'Google Play indisponível';drawPlans()}
+  if('premium' in d){const was=PREM.on;PREM.on=!!d.premium;syncNative();
+    if(PREM.on&&!was){if(FB.user)fbAttach();closeSheet();render();toast('Premium ativado. Obrigado!')}
+    else if(!PREM.on&&was){if(FB.user)fbAttach();render()}}
+  if(d.status==='canceled')toast('Compra cancelada');
+  else if(d.status==='pending')toast('Pagamento pendente. O Premium ativa quando for aprovado.');
+  else if(d.status==='error')toast('Não foi possível concluir a compra. Tente de novo.')};
+const PREM_FEATURES=[
+  ['bolt','Anotação automática','Gastos e entradas anotados direto da notificação do banco, sem abrir o app. Com "Desfazer" no próprio aviso.'],
+  ['cloud','Backup na nuvem','Seus dados salvos na sua conta e sincronizados entre celulares.'],
+  ['wallet','Contas e cartões ilimitados',`No grátis: até ${FREE.accounts} contas e ${FREE.cards} cartões.`],
+  ['bars','Análises completas','Gasto por dia, formas de pagamento, faturas e maiores gastos.'],
+  ['target','Metas e limites ilimitados',`No grátis: ${FREE.goals} meta e ${FREE.budgets} limites por categoria.`],
+  ['receipt','Exportar planilha','Seus lançamentos em CSV, para Excel ou Google Planilhas.'],
+  ['palette','Cores personalizadas','Qualquer cor para o app, além das cores prontas.']];
+const PREM_REASON={contas:`Com o grátis você pode ter até ${FREE.accounts} contas.`,cartoes:`Com o grátis você pode ter até ${FREE.cards} cartões.`,metas:`Com o grátis você pode ter ${FREE.goals} meta.`,
+  limites:`Com o grátis você pode ter até ${FREE.budgets} limites por categoria.`,auto:'A anotação automática é Premium. No grátis, as notificações ficam para você revisar.',
+  nuvem:'O backup na nuvem é Premium.',analises:'As análises completas são Premium.',csv:'Exportar planilha é Premium.',cor:'Cores personalizadas são Premium.'};
+function need(reason){if(prem())return true;paywall(reason);return false}
+const periodTxt=p=>({P1W:'semana',P1M:'mês',P3M:'trimestre',P6M:'semestre',P1Y:'ano'}[p]||p);
+const trialTxt=p=>{const m=/^P(\d+)([DWM])$/.exec(p||'');if(!m)return'';return m[1]+' '+({D:'dia',W:'semana',M:'mês'}[m[2]])+(m[1]>1?(m[2]==='M'?'es':'s'):'')+' grátis'};
+function paywall(reason){
+  openSheet(`<div class="pwhead"><span class="pwbadge">${ic('trophy',18)}Premium</span><h3 style="margin:10px 0 4px">Tudo no automático</h3>
+    <p style="margin:0;opacity:.9;font-size:14px">${esc(PREM_REASON[reason]||'Desbloqueie todos os recursos do app.')}</p></div>
+   <div class="pwlist">${PREM_FEATURES.map(([i,t,d])=>`<div class="pwf"><span class="cico" style="background:var(--accent-soft);color:var(--accent-text)">${ic(i,20)}</span><div><b>${t}</b><small>${d}</small></div></div>`).join('')}</div>
+   <div id="plans"></div>
+   <p class="hint" style="margin-top:12px;text-align:center">Cobrança pelo Google Play. Cancele quando quiser em Play Store > Pagamentos e assinaturas.</p>`,sh=>{drawPlans();if(AND&&!PREM.products){try{AND.billingLoad()}catch(e){PREM.msg='Google Play indisponível';drawPlans()}}})}
+function drawPlans(){const box=scrim&&scrim.querySelector('#plans');if(!box)return;
+  if(!AND){box.innerHTML=`<p class="hint" style="margin-bottom:10px">O Premium é assinado no app para Android.</p><button type="button" class="btn" data-act="getapk">${ic('phone',20)}Ver o app para Android</button>`;return}
+  if(PREM.on){box.innerHTML=`<div class="panel pad" style="text-align:center"><b style="color:var(--in)">${ic('check',18,2.6)} Seu Premium está ativo</b></div><div class="btns"><button type="button" class="btn ghost" data-act="managesubs">Gerenciar assinatura</button></div>`;return}
+  const ps=PREM.products;
+  if(!ps||!ps.length){box.innerHTML=PREM.msg?`<div class="panel pad"><b>Planos indisponíveis agora</b><p class="hint" style="margin-top:4px">${esc(PREM.msg)}. A assinatura funciona quando o app é instalado pela Play Store.</p></div><div class="btns"><button type="button" class="btn ghost" data-act="restore">Restaurar compra</button></div>`:'<p class="hint" style="text-align:center">Carregando planos…</p>';return}
+  const mo=ps.find(p=>p.period==='P1M'),yr=ps.find(p=>p.period==='P1Y');const save=mo&&yr?Math.round((1-yr.micros/(mo.micros*12))*100):0;
+  const order=[yr,mo,...ps.filter(p=>p!==yr&&p!==mo)].filter(Boolean);
+  box.innerHTML=`<div class="plans">${order.map((p,i)=>`<button type="button" class="plan ${i===0?'best':''}" data-act="buy" data-v="${esc(p.id)}">
+      <span><b>${p.period==='P1Y'?'Anual':p.period==='P1M'?'Mensal':esc(periodTxt(p.period))}</b>${p===yr&&save>0?`<span class="st ok" style="margin-left:6px">economize ${save}%</span>`:''}<small>${p.trial?trialTxt(p.trial)+', depois ':''}${esc(p.price)} por ${periodTxt(p.period)}</small></span>
+      <span class="num" style="font-weight:800">${esc(p.price)}</span></button>`).join('')}</div>
+    <div class="btns"><button type="button" class="btn ghost" data-act="restore">Restaurar compra</button></div>`}
+function premRow(){if(!AND)return'';return PREM.on?crow('trophy','#F5C451','Premium ativo','Obrigado por apoiar o app','data-act="premium"',`<span class="st ok">Ativo</span>`)
+  :crow('trophy','#F5C451','Seja Premium','Anotação automática, nuvem, análises e mais','data-act="premium"',`<span class="st ac">Ver planos</span>`)}
+function lockedCard(reason,title,sub){return `<section><button type="button" class="panel lockcard" data-act="premium" data-v="${reason}"><span class="cico" style="background:var(--accent-soft);color:var(--accent-text)">${ic('lock',22)}</span><span class="n"><b>${title}</b><small>${sub}</small></span><span class="st ac">Premium</span></button></section>`}
+
+/* ----- planilha CSV ----- */
+function csvData(){const q=v=>{v=String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};const num=c=>(c/100).toFixed(2).replace('.',',');
+  const rows=[['Data','Tipo','Descrição','Categoria','Subcategoria','Valor','Forma de pagamento','Conta ou cartão','Fatura','Parcela','Situação','Observação']];
+  S.tx.slice().sort((a,b)=>a.date<b.date?-1:1).forEach(t=>{const c=catById(t.catId),card=isCredit(t)?cardById(t.card):null,acc=accById(t.accountId);
+    rows.push([t.date.split('-').reverse().join('/'),t.type==='in'?'Entrada':'Gasto',t.desc||'',c.name,t.sub||'',(t.type==='in'?'':'-')+num(t.amount),methodBy(t.method).l,card?card.name:acc?acc.name:'',card?t.inv:'',t.inst?t.inst.n+'/'+t.inst.of:'',isCredit(t)?'No cartão':t.paid?(t.type==='in'?'Recebido':'Pago'):(t.type==='in'?'A receber':'A pagar'),t.note||''])});
+  return '﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n')}
+async function saveText(fn,text,mime){
+  if(AND){let w='';try{w=AND.saveFile(fn,text,mime)}catch(e){}return w?{where:w}:null}
+  try{const dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;if(dl){await dl.save({filename:fn,data:new Blob([text],{type:mime})});return{where:'downloads'}}}catch(e){}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=fn;document.body.appendChild(a);a.click();a.remove();return{where:'downloads'}}catch(e){return null}}
+async function exportCSV(){if(!need('csv'))return;const fn='lancamentos-'+TODAY+'.csv';const r=await saveText(fn,csvData(),'text/csv');
+  if(r)toast(r.where&&r.where!=='downloads'?'Planilha salva em '+r.where:'Planilha baixada');else toast('Não foi possível salvar a planilha')}
+
+/* ----- aviso antes de pedir o acesso às notificações (exigência da Play Store) ----- */
+function accessSheet(){let ok=false;try{ok=AND.hasAccess()}catch(e){}
+  openSheet(`<h3>${ok?'Leitura das notificações':'Permitir leitura das notificações'}</h3>
+   <div class="panel pad" style="display:flex;flex-direction:column;gap:10px;font-size:14px;margin-bottom:14px">
+    <div><b>O que o app lê:</b> só notificações com valor em R$ e palavras como compra, Pix, transferência ou pagamento, para anotar seus gastos e entradas.</div>
+    <div><b>O que fica de fora:</b> conversas (WhatsApp, Telegram, SMS, e-mail), códigos de segurança, ofertas e avisos de fatura.</div>
+    <div><b>Para onde vão:</b> ficam só no seu celular. Se você ativar o backup na nuvem, vão para a sua conta, que só você acessa. Nada é vendido ou repassado.</div>
+    <div>Você pode desligar quando quiser nas configurações do Android.</div></div>
+   ${ok?`<div class="panel pad" style="margin-bottom:14px"><b style="color:var(--in)">${ic('check',18,2.6)} Acesso ativo</b><p class="hint" style="margin-top:6px">Se a leitura parar, libere o app na economia de bateria e, em celulares Xiaomi, ative "Início automático".</p></div>`:''}
+   <div class="btns"><button type="button" class="btn" id="ac-go">${ok?'Abrir configurações do acesso':'Continuar e permitir'}</button></div>
+   <div class="btns"><button type="button" class="btn ghost" id="ac-app">Bateria e outras permissões do app</button></div>
+   <p class="hint" style="margin-top:10px">Se o Android disser "configuração restrita", toque em "Bateria e outras permissões do app", depois nos três pontinhos e em "Permitir configurações restritas".</p>
+   <p style="margin-top:10px;text-align:center"><button type="button" class="link" data-act="privacy" style="margin:0 auto">Política de privacidade</button></p>`,sh=>{
+    sh.querySelector('#ac-go').onclick=()=>{try{AND.openAccess()}catch(e){toast('Abra Configurações > Notificações > Acesso às notificações')}closeSheet()};
+    sh.querySelector('#ac-app').onclick=()=>{try{AND.openAppSettings()}catch(e){}}})}
+async function privacySheet(){let html='';try{const r=await fetch('privacidade.html');if(r.ok){const t=await r.text();const m=/<main[^>]*>([\s\S]*)<\/main>/.exec(t);html=m?m[1]:''}}catch(e){}
+  if(!html){openSheet(`<h3>Política de privacidade</h3><p class="hint">Abra a política em: ${esc(PRIVACY_URL)}</p>`);return}
+  openSheet(`<div class="policy">${html}</div>`)}
+
+/* ================= Firebase: conta (email e senha) e nuvem para o app público ================= */
+// Cole aqui a configuração do seu projeto Firebase (Console do Firebase > Configurações do projeto > Seus apps > Web).
+// Esses valores não são secretos: a proteção vem das regras do Firestore (arquivo firestore.rules).
+const FIREBASE_CONFIG=null;
+const PRIVACY_URL='https://kiritox3.github.io/Animes-In-Japan-BOT/financas/privacidade.html';
+const FB={auth:null,db:null,user:null,ready:false};
+const fbAvailable=()=>!!FIREBASE_CONFIG&&!(window.claude&&typeof window.claude.use==='function');
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+async function fbInit(){
+  try{for(const f of['app','auth','firestore'])await loadScript('vendor/firebase/firebase-'+f+'-compat.js')}catch(e){setCloud('off');return}
+  try{firebase.initializeApp(FIREBASE_CONFIG);FB.auth=firebase.auth();FB.db=firebase.firestore();FB.auth.languageCode='pt'}catch(e){setCloud('off');return}
+  try{await FB.db.enablePersistence({synchronizeTabs:true})}catch(e){}
+  FB.ready=true;FB.auth.onAuthStateChanged(u=>{FB.user=u;fbAttach()})}
+function fbAttach(){if(CLOUD.unsub){try{CLOUD.unsub()}catch(e){}CLOUD.unsub=null}clearTimeout(CLOUD.to);CLOUD.ready=false;CLOUD.col=null;CLOUD.hashes={};CLOUD.pending=null;
+  const u=FB.user;if(!u){CLOUD.id=null;CLOUD.email='';CLOUD.name='';setCloud('signed');if(tab==='config'&&!scrim)render();return}
+  CLOUD.id=u.uid;CLOUD.email=u.email||'';CLOUD.name=u.displayName||'';
+  if(!prem()){setCloud('locked');if(tab==='config'&&!scrim)render();return}
+  CLOUD.col=FB.db.collection('users').doc(u.uid).collection('data');setCloud('conn');if(tab==='config'&&!scrim)render();
+  CLOUD.to=setTimeout(()=>{if(!CLOUD.ready)setCloud('nonet')},10000);
+  CLOUD.unsub=CLOUD.col.onSnapshot(cloudSnap,e=>{clearTimeout(CLOUD.to);setCloud('err',e&&e.code)})}
+const FB_ERR={'auth/invalid-email':'Email inválido.','auth/missing-password':'Digite a senha.','auth/wrong-password':'Email ou senha incorretos.','auth/invalid-credential':'Email ou senha incorretos.','auth/user-not-found':'Não existe conta com esse email.',
+  'auth/email-already-in-use':'Já existe uma conta com esse email. Toque em Entrar.','auth/weak-password':'A senha precisa ter pelo menos 6 caracteres.','auth/network-request-failed':'Sem internet. Tente de novo.','auth/too-many-requests':'Muitas tentativas. Espere alguns minutos.','auth/requires-recent-login':'Por segurança, saia e entre de novo antes de excluir a conta.'};
+const fbErr=e=>FB_ERR[e&&e.code]||'Não deu certo. Tente de novo.';
+function fbSheet(){
+  if(!FB.ready){openSheet(`<h3>Conta e nuvem</h3><p class="hint">Conectando… Verifique a internet e tente de novo em instantes.</p>`);return}
+  const u=FB.user;
+  if(!u){openSheet(`<h3>Entrar ou criar conta</h3><p class="hint" style="margin-bottom:14px">Com uma conta, seus dados ficam salvos na nuvem e você usa em outro celular.${prem()?'':' O backup na nuvem é um recurso Premium.'}</p>
+    <form class="form" id="fbf" novalidate><div class="field"><label for="fb-e">Email</label><input id="fb-e" type="email" autocomplete="email" inputmode="email"></div>
+    <div class="field"><label for="fb-p">Senha</label><input id="fb-p" type="password" autocomplete="current-password" minlength="6"></div>
+    <p class="hint" id="fb-msg" style="color:var(--out)"></p>
+    <div class="btns"><button class="btn" type="submit" id="fb-in">Entrar</button></div><div class="btns"><button type="button" class="btn ghost" id="fb-new">Criar conta</button></div>
+    <p style="text-align:center"><button type="button" class="link" id="fb-forgot" style="margin:0 auto">Esqueci minha senha</button></p></form>`,sh=>{const q=s=>sh.querySelector(s);
+      const run=async(fn,okMsg)=>{q('#fb-msg').textContent='';sh.querySelectorAll('button').forEach(b=>b.disabled=true);try{await fn();closeSheet();if(okMsg)toast(okMsg)}catch(e){q('#fb-msg').textContent=fbErr(e)}sh.querySelectorAll('button').forEach(b=>b.disabled=false)};
+      q('#fbf').onsubmit=e=>{e.preventDefault();run(()=>FB.auth.signInWithEmailAndPassword(q('#fb-e').value.trim(),q('#fb-p').value),'Você entrou na sua conta')};
+      q('#fb-new').onclick=()=>run(()=>FB.auth.createUserWithEmailAndPassword(q('#fb-e').value.trim(),q('#fb-p').value),'Conta criada');
+      q('#fb-forgot').onclick=()=>{const em=q('#fb-e').value.trim();if(!em){q('#fb-msg').textContent='Digite seu email acima.';return}FB.auth.sendPasswordResetEmail(em).then(()=>toast('Enviamos um link para '+em),e=>{q('#fb-msg').textContent=fbErr(e)})}});return}
+  openSheet(`<h3>Sua conta</h3><div class="panel" style="padding:4px 16px;margin-bottom:14px">
+     <div class="kv"><span class="muted">Email</span><span style="overflow-wrap:anywhere;text-align:right">${esc(u.email||'')}</span></div>
+     <div class="kv"><span class="muted">Nuvem</span><span data-cloudtxt style="color:${cloudCol()};font-weight:700">${cloudSub()}</span></div></div>
+   ${prem()?`<div class="btns"><button type="button" class="btn" id="fb-sync">${ic('cloud',20)}Sincronizar agora</button></div>`:`<div class="btns"><button type="button" class="btn" data-act="premium" data-v="nuvem">${ic('trophy',20)}Ativar backup na nuvem</button></div>`}
+   <div class="btns"><button type="button" class="btn ghost" id="fb-out">Sair da conta</button></div>
+   <div class="btns"><button type="button" class="btn danger" id="fb-del">${ic('trash',18)}Excluir conta e dados da nuvem</button></div>
+   <p class="hint" style="margin-top:8px">Sair ou excluir a conta não apaga os dados deste celular.</p>`,sh=>{const q=s=>sh.querySelector(s);
+    if(q('#fb-sync'))q('#fb-sync').onclick=()=>{if(!CLOUD.ready){toast('Ainda conectando à nuvem');return}for(const k in CLOUD.hashes)CLOUD.hashes[k]='';cloudPush().then(()=>{if(CLOUD.st==='ok')toast('Tudo salvo na nuvem')})};
+    q('#fb-out').onclick=()=>{FB.auth.signOut().then(()=>{S.cloudUser='';persistLocal();closeSheet();toast('Você saiu da conta')})};
+    q('#fb-del').onclick=e=>armDanger(e.currentTarget,async()=>{try{const col=FB.db.collection('users').doc(u.uid).collection('data');const snap=await col.get();for(const d of snap.docs)await d.ref.delete();await FB.db.collection('users').doc(u.uid).delete().catch(()=>{});await u.delete();S.cloudUser='';persistLocal();closeSheet();toast('Conta excluída')}catch(err){toast(fbErr(err))}})})}
 /* ================= nuvem (conta do Claude / email) ================= */
 const CLOUD={st:'conn',code:'',id:null,email:'',name:'',col:null,ready:false,pushing:false,dirty:false,hashes:{},timer:null,to:null,last:0,pending:null};
 const DEVICE=(()=>{try{let d=localStorage.getItem('caixa.device');if(!d){d=uid();localStorage.setItem('caixa.device',d)}return d}catch(e){return 'd'+uid()}})();
 function persistLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const hsh=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33+s.charCodeAt(i))|0;return String(h)};
-const CLOUD_TXT={off:'Indisponível aqui',signed:'Entre na sua conta',conn:'Conectando…',sync:'Salvando…',ok:'Salvo na nuvem',err:'Não foi possível salvar',nonet:'Sem conexão: salvo neste aparelho',choose:'Escolha quais dados manter'};
+const CLOUD_TXT={locked:'Recurso Premium',off:'Indisponível aqui',signed:'Entre na sua conta',conn:'Conectando…',sync:'Salvando…',ok:'Salvo na nuvem',err:'Não foi possível salvar',nonet:'Sem conexão: salvo neste aparelho',choose:'Escolha quais dados manter'};
 const cloudCol=()=>({ok:'var(--in)',sync:'var(--accent-text)',conn:'var(--muted)',err:'var(--out)',nonet:'var(--warn)',choose:'var(--warn)'}[CLOUD.st]||'var(--muted)');
 const cloudIco=()=>`<span data-cloudico style="color:${cloudCol()};display:grid">${ic(['off','signed'].includes(CLOUD.st)?'cloudoff':'cloud',22)}</span>`;
 function cloudSub(){const t=CLOUD_TXT[CLOUD.st]||'';if(CLOUD.st==='ok'&&CLOUD.last){const m=Math.round((Date.now()-CLOUD.last)/60000);return t+(m<1?' agora':` há ${m} min`)}return t}
@@ -1354,7 +1508,7 @@ function cloudSnap(snap){const docs={};snap.docs.forEach(d=>{if(d.exists)docs[d.
   if(snap.metadata.hasPendingWrites||!docs.state||CLOUD.st==='choose')return;
   if(docs.state.device!==DEVICE&&(docs.state.updatedAt||0)>(S.updatedAt||0)&&cloudComplete(docs))cloudApply(docs,'Atualizado com outro aparelho')}
 async function cloudInit(){
-  if(!window.claude||typeof window.claude.use!=='function'){setCloud('off');return}
+  if(!window.claude||typeof window.claude.use!=='function'){if(fbAvailable())fbInit();else setCloud('off');return}
   let db=null,user=null;try{[db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')])}catch(e){}
   if(!db||!user){setCloud('off');return}
   const me=await user.me();if(!me.id){setCloud('signed');return}
@@ -1411,13 +1565,13 @@ document.addEventListener('click',e=>{
     case 'catfilter':page=null;tab='gastos';gmode='out';gcat=a.dataset.id;gstatus='all';gmethod=null;render();window.scrollTo(0,0);break;
     case 'plan':planSheet();break;
     case 'canbuy':canBuySheet();break;
-    case 'newgoal':goalForm(null);break;
+    case 'newgoal':if(S.plan.goals.length>=FREE.goals&&!need('metas'))break;goalForm(null);break;
     case 'editgoal':goalForm(S.plan.goals.find(g=>g.id===a.dataset.id));break;
     case 'accounts':page='contas';ptab='contas';render();window.scrollTo(0,0);break;
-    case 'newacc':accForm(null);break;
+    case 'newacc':if(S.accounts.length>=FREE.accounts&&!need('contas'))break;accForm(null);break;
     case 'editacc':accForm(accById(a.dataset.id));break;
     case 'cards':page='contas';ptab='cartoes';pkind='credito';render();window.scrollTo(0,0);break;
-    case 'newcard':cardForm(null);break;
+    case 'newcard':if(S.cards.length>=FREE.cards&&!need('cartoes'))break;cardForm(null);break;
     case 'editcard':cardForm(cardById(a.dataset.id));break;
     case 'newcat':catForm(null,'out');break;
     case 'editcat':catForm(catById(a.dataset.id));break;
@@ -1444,12 +1598,18 @@ document.addEventListener('click',e=>{
     case 'setcur':S.settings.currency=v;done('Moeda alterada');break;
     case 'color':colorSheet();break;
     case 'homecfg':homeSheet();break;
-    case 'cloud':cloudSheet();break;
+    case 'cloud':if(fbAvailable())fbSheet();else cloudSheet();break;
+    case 'premium':paywall(v);break;
+    case 'buy':try{AND.buy(v)}catch(e){toast('Google Play indisponível')}break;
+    case 'restore':try{AND.restore();toast('Conferindo sua assinatura…')}catch(e){}break;
+    case 'managesubs':try{AND.manageSubs()}catch(e){}break;
+    case 'privacy':privacySheet();break;
+    case 'csv':exportCSV();break;
     case 'import':importSheet();break;
     case 'inbox':importSheet(null,true);break;
     case 'getapk':apkSheet();break;
-    case 'andaccess':try{AND.openAccess()}catch(e){toast('Abra Configurações > Notificações > Acesso às notificações')}break;
-    case 'unblock':S.settings.blockedApps=(S.settings.blockedApps||[]).filter(x=>x!==v);save();render();break;
+    case 'andaccess':accessSheet();break;
+    case 'unblock':S.settings.blockedApps=(S.settings.blockedApps||[]).filter(x=>x!==v);save();syncNative();render();break;
     case 'export':exportData();break;
     case 'import':importData();break;
     case 'wipe':armDanger(a,()=>{S=defaults();save();render();toast('Dados apagados')});break;
@@ -1463,7 +1623,7 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
   else if(id==='appname'){S.settings.name=el.value.trim()||'Caixa';save();toast('Nome salvo')}
   else if(id==='hidevals'){S.settings.hide=el.checked;save();render()}
   else if(id==='darkmode'){S.settings.theme=el.checked?'dark':'light';save();render()}
-  else if(id==='autoimp'){S.settings.autoImport=el.checked?'auto':'review';save();toast(el.checked?'Lançamentos claros entram direto':'Tudo passa pela revisão')}
+  else if(id==='autoimp'){if(el.checked&&!prem()){el.checked=false;paywall('auto');return}S.settings.autoImport=el.checked?'auto':'review';save();syncNative();toast(el.checked?'Anotação automática ligada':'Tudo passa pela revisão')}
   else if(id==='andalerts'){try{AND.setAlerts(el.checked)}catch(e){}}
   else if(id==='remtog'){S.settings.reminders=el.checked;save();render()}
   else if(id==='hl'){S.settings.highlight=el.value;save();toast('Destaque salvo')}
@@ -1471,7 +1631,7 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
 });
 if(window.matchMedia)matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(S.settings.theme==='system')applyTheme()});
 
-load();if(!S.inbox)S.inbox=[];render();cloudInit();andPull();document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
+load();if(!S.inbox)S.inbox=[];premInit();render();cloudInit();andPull();document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 })();
 </script>

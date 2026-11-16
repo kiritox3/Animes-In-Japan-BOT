@@ -27,20 +27,41 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Gerar APK
+      # Chave de envio para a Play Store (opcional). Sem estes segredos, usa a chave de teste do repositório.
+      - name: Preparar chave de assinatura
+        env:
+          KS: ${{ secrets.CAIXA_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "CAIXA_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          fi
+
+      - name: Gerar APK e AAB
         working-directory: android
+        env:
+          CAIXA_KEYSTORE_PASSWORD: ${{ secrets.CAIXA_KEYSTORE_PASSWORD }}
+          CAIXA_KEY_ALIAS: ${{ secrets.CAIXA_KEY_ALIAS }}
+          CAIXA_KEY_PASSWORD: ${{ secrets.CAIXA_KEY_PASSWORD }}
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease
+          ./gradlew --no-daemon assembleRelease bundleRelease
 
-      - name: Renomear APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk Caixa.apk
+      - name: Renomear arquivos
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk Caixa.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab Caixa-playstore.aab
 
       - uses: actions/upload-artifact@v4
         with:
           name: Caixa-apk
           path: Caixa.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Caixa-playstore-aab
+          path: Caixa-playstore.aab
 
       - name: Publicar na página de download
         uses: softprops/action-gh-release@v2
@@ -50,10 +71,12 @@ jobs:
           target_commitish: ${{ github.sha }}
           prerelease: true
           make_latest: false
-          files: Caixa.apk
+          files: |
+            Caixa.apk
+            Caixa-playstore.aab
           body: |
-            Baixe o arquivo **Caixa.apk** abaixo no celular Android e abra para instalar.
-            Se o Android pedir, permita "instalar apps desta fonte".
-            Depois, no Caixa, vá em Config > Ler notificações do banco para dar o acesso.
+            **Caixa.apk**: para instalar direto no celular (teste). Se o Play Protect bloquear, veja PUBLICAR.md.
+            **Caixa-playstore.aab**: arquivo para enviar à Play Store.
+            Depois de instalar, vá em Config > Ler notificações do banco para dar o acesso.
 
             Versão gerada automaticamente a partir do commit ${{ github.sha }}.
