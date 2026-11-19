@@ -10,11 +10,11 @@ tasks.register('copyWeb', Copy) {
 }
 
 android {
-    namespace 'app.caixa.financas'
+    namespace 'app.trocado'
     compileSdk 36
 
     defaultConfig {
-        applicationId 'app.caixa.financas'
+        applicationId 'app.trocado'
         minSdk 26
         targetSdk 36
         versionCode Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')

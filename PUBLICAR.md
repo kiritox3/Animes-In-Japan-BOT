@@ -1,16 +1,16 @@
 # Como publicar o app na Play Store
 
-Este guia leva o app de finanças (pasta `financas/` + `android/`) até a Play Store, com assinatura Premium e login na nuvem. Siga na ordem. Os passos marcados com **(você)** só podem ser feitos na sua conta.
+Este guia leva o Trocado (pasta `financas/` + `android/`) até a Play Store, com assinatura Premium e login na nuvem. Siga na ordem. Os passos marcados com **(você)** só podem ser feitos na sua conta.
 
-## 1. Escolher o nome (você)
+## 1. Nome do app
 
-"Caixa" é marca da Caixa Econômica Federal e a Play Store pode recusar. Para trocar o nome, mude:
+O app se chama **Trocado**. Para trocar o nome, mude:
 
 - `android/app/src/main/res/values/strings.xml` → `app_name`
-- `financas/index.html` → `name:'Caixa'` em `defaults()` e o `<title>`
+- `financas/index.html` → a constante `APP_NAME`, `name:'Trocado'` em `defaults()` e o `<title>`
 - `financas/privacidade.html` → o nome no primeiro parágrafo
 
-O identificador do pacote (`app.caixa.financas`, em `android/app/build.gradle`) é permanente depois do primeiro envio à loja. Se quiser trocar, troque antes.
+O identificador do pacote (`app.trocado`, em `android/app/build.gradle`) é permanente depois do primeiro envio à loja. Se quiser trocar, troque antes.
 
 ## 2. Firebase: login e nuvem (você)
 
@@ -48,12 +48,12 @@ O arquivo `android/app/caixa.jks` é uma chave de **teste** e está público no 
    - `CAIXA_KEYSTORE_PASSWORD`: a senha do arquivo
    - `CAIXA_KEY_ALIAS`: `upload`
    - `CAIXA_KEY_PASSWORD`: a senha da chave
-3. A cada envio, o GitHub Actions gera o `Caixa-playstore.aab` assinado com essa chave, na release `caixa-android-latest` e nos artefatos da execução.
+3. A cada envio, o GitHub Actions gera o `Trocado-playstore.aab` assinado com essa chave, na release `caixa-android-latest` e nos artefatos da execução.
 4. No Play Console, aceite o **Play App Signing** (o Google guarda a chave final; a sua vira a "chave de upload").
 
 ## 5. Criar o app e as assinaturas no Play Console (você)
 
-1. Crie o app, envie o `Caixa-playstore.aab` para uma faixa de **teste interno**.
+1. Crie o app, envie o `Trocado-playstore.aab` para uma faixa de **teste interno**.
 2. Em **Monetizar → Produtos → Assinaturas**, crie duas assinaturas com estes IDs exatos (o app procura por eles):
    - `premium_mensal`: plano base de renovação mensal (sugestão: R$ 9,90, com 7 dias grátis como oferta)
    - `premium_anual`: plano base de renovação anual (sugestão: R$ 79,90)
@@ -70,7 +70,7 @@ O arquivo `android/app/caixa.jks` é uma chave de **teste** e está público no 
 
 ## 7. Por que o Play Protect bloqueou o APK
 
-Fora da loja, o Android bloqueia apps que pedem acesso às notificações quando instalados pelo navegador. Isso deixa de acontecer quando o app é instalado pela Play Store. Para testar antes disso, use o teste interno (passo 5) ou instale por cabo com `adb install Caixa.apk`.
+Fora da loja, o Android bloqueia apps que pedem acesso às notificações quando instalados pelo navegador. Isso deixa de acontecer quando o app é instalado pela Play Store. Para testar antes disso, use o teste interno (passo 5) ou instale por cabo com `adb install Trocado.apk`.
 
 ## O que é grátis e o que é Premium
 

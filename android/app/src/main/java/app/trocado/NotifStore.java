@@ -1,4 +1,4 @@
-package app.caixa.financas;
+package app.trocado;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -54,6 +54,33 @@ final class NotifStore {
             return item;
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /** Marca um item como teste: a página avisa que funcionou e não anota. */
+    static synchronized void markTest(Context c, String id) {
+        SharedPreferences p = prefs(c);
+        try {
+            JSONArray q = new JSONArray(p.getString(QUEUE, "[]"));
+            for (int i = 0; i < q.length(); i++) {
+                JSONObject o = q.getJSONObject(i);
+                if (id.equals(o.optString("id"))) o.put("test", true);
+            }
+            p.edit().putString(QUEUE, q.toString()).apply();
+        } catch (Exception ignored) { }
+    }
+
+    /** Estado da leitura para a tela de Config. */
+    static String status(Context c) {
+        SharedPreferences p = prefs(c);
+        try {
+            return new JSONObject()
+                    .put("connected", p.getBoolean("connected", false))
+                    .put("lastAny", p.getLong("lastAny", 0))
+                    .put("lastBank", p.getLong("lastBank", 0))
+                    .toString();
+        } catch (Exception e) {
+            return "{}";
         }
     }
 

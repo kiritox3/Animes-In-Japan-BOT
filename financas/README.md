@@ -1,4 +1,4 @@
-# Caixa — finanças pessoais
+# Trocado — finanças pessoais
 
 App de controle financeiro pessoal feito para celular, com tema escuro por padrão. É um único arquivo HTML, sem servidor nem dependências. Os dados ficam salvos no navegador (localStorage).
 

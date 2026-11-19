@@ -1,4 +1,4 @@
-package app.caixa.financas;
+package app.trocado;
 
 import android.Manifest;
 import android.app.Notification;
@@ -41,11 +41,27 @@ public class NotifListener extends NotificationListenerService {
 
     static final String CHANNEL = "capturas";
 
+    static final String TEST_EXTRA = "trocado_test";
+
+    @Override
+    public void onListenerConnected() {
+        NotifStore.prefs(this).edit().putBoolean("connected", true).putLong("connectedAt", System.currentTimeMillis()).apply();
+    }
+
+    @Override
+    public void onListenerDisconnected() {
+        NotifStore.prefs(this).edit().putBoolean("connected", false).apply();
+    }
+
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         try {
             String pkg = sbn.getPackageName();
-            if (pkg == null || pkg.equals(getPackageName()) || SKIP.contains(pkg)) return;
+            if (pkg == null) return;
+            Notification n0 = sbn.getNotification();
+            boolean test = pkg.equals(getPackageName()) && n0 != null && n0.extras != null && n0.extras.getBoolean(TEST_EXTRA, false);
+            if (!test) NotifStore.prefs(this).edit().putLong("lastAny", System.currentTimeMillis()).apply();
+            if ((pkg.equals(getPackageName()) && !test) || SKIP.contains(pkg)) return;
             if (Prefs.blocked(this, pkg)) return;
             Notification n = sbn.getNotification();
             if (n == null || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
@@ -65,6 +81,12 @@ public class NotifListener extends NotificationListenerService {
             } catch (Exception ignored) { }
 
             JSONObject parsed = NotifParser.parse(all, sbn.getPostTime());
+            if (test) {
+                JSONObject item = NotifStore.add(this, pkg, app, all + " #" + sbn.getPostTime(), sbn.getPostTime(), parsed, false);
+                if (item != null) { NotifStore.markTest(this, item.optString("id")); NotifStore.ping(); }
+                return;
+            }
+            NotifStore.prefs(this).edit().putLong("lastBank", System.currentTimeMillis()).apply();
             boolean auto = parsed != null && parsed.optBoolean("confident") && NotifStore.autoOn(this);
             JSONObject item = NotifStore.add(this, pkg, app, all, sbn.getPostTime(), parsed, auto);
             if (item == null) return;
@@ -73,6 +95,27 @@ public class NotifListener extends NotificationListenerService {
         } catch (Exception ignored) {
             // Nunca deixar uma notificação estranha derrubar o serviço.
         }
+    }
+
+    /** Notificação de teste: o próprio app publica e o serviço precisa ler. */
+    static boolean postTest(android.content.Context c) {
+        if (Build.VERSION.SDK_INT >= 33
+                && c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm == null) return false;
+        nm.createNotificationChannel(new NotificationChannel(CHANNEL, c.getString(R.string.channel_capturas), NotificationManager.IMPORTANCE_LOW));
+        Bundle extras = new Bundle();
+        extras.putBoolean(TEST_EXTRA, true);
+        Notification note = new Notification.Builder(c, CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_caixa)
+                .setContentTitle("Teste do " + c.getString(R.string.app_name))
+                .setContentText("Compra de R$ 1,00 aprovada em TESTE. Esta notificação some sozinha.")
+                .setExtras(extras)
+                .setTimeoutAfter(15000)
+                .setAutoCancel(true)
+                .build();
+        nm.notify(4242, note);
+        return true;
     }
 
     /** Aviso do próprio app: "Anotado" (automático) ou "Para revisar". */

@@ -1,4 +1,4 @@
-package app.caixa.financas;
+package app.trocado;
 
 import android.content.ContentValues;
 import android.content.Intent;
@@ -48,6 +48,14 @@ final class Bridge {
     /** Entrega as notificações capturadas (JSON) e esvazia a fila. */
     @JavascriptInterface
     public String pull() { return NotifStore.drain(act); }
+
+    /** Estado do serviço de leitura (JSON: connected, lastAny, lastBank). */
+    @JavascriptInterface
+    public String status() { return NotifStore.status(act); }
+
+    /** Publica uma notificação de teste para conferir se a leitura funciona. */
+    @JavascriptInterface
+    public boolean postTest() { return NotifListener.postTest(act); }
 
     @JavascriptInterface
     public boolean alertsOn() { return NotifStore.alertsOn(act); }

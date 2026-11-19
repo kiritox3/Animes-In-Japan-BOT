@@ -1,4 +1,4 @@
-package app.caixa.financas;
+package app.trocado;
 
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;

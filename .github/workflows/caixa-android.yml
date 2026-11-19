@@ -50,33 +50,33 @@ jobs:
 
       - name: Renomear arquivos
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk Caixa.apk
-          cp android/app/build/outputs/bundle/release/app-release.aab Caixa-playstore.aab
+          cp android/app/build/outputs/apk/release/app-release.apk Trocado.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab Trocado-playstore.aab
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Caixa-apk
-          path: Caixa.apk
+          name: Trocado-apk
+          path: Trocado.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Caixa-playstore-aab
-          path: Caixa-playstore.aab
+          name: Trocado-playstore-aab
+          path: Trocado-playstore.aab
 
       - name: Publicar na página de download
         uses: softprops/action-gh-release@v2
         with:
           tag_name: caixa-android-latest
-          name: Caixa para Android
+          name: Trocado para Android
           target_commitish: ${{ github.sha }}
           prerelease: true
           make_latest: false
           files: |
-            Caixa.apk
-            Caixa-playstore.aab
+            Trocado.apk
+            Trocado-playstore.aab
           body: |
-            **Caixa.apk**: para instalar direto no celular (teste). Se o Play Protect bloquear, veja PUBLICAR.md.
-            **Caixa-playstore.aab**: arquivo para enviar à Play Store.
+            **Trocado.apk**: para instalar direto no celular (teste). Se o Play Protect bloquear, veja PUBLICAR.md.
+            **Trocado-playstore.aab**: arquivo para enviar à Play Store.
             Depois de instalar, vá em Config > Ler notificações do banco para dar o acesso.
 
             Versão gerada automaticamente a partir do commit ${{ github.sha }}.
