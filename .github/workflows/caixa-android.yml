@@ -46,7 +46,10 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease bundleRelease
+          # Arquivo da Play Store: cobrança normal do Premium.
+          ./gradlew --no-daemon bundleRelease
+          # APK pessoal para instalar direto: Premium liberado para teste.
+          ./gradlew --no-daemon assembleRelease -PunlockPremium=true
 
       - name: Renomear arquivos
         run: |
@@ -75,7 +78,7 @@ jobs:
             Trocado.apk
             Trocado-playstore.aab
           body: |
-            **Trocado.apk**: para instalar direto no celular (teste). Se o Play Protect bloquear, veja PUBLICAR.md.
+            **Trocado.apk**: versão pessoal de teste, com o Premium liberado, para instalar direto no celular. Se o Play Protect bloquear, veja PUBLICAR.md.
             **Trocado-playstore.aab**: arquivo para enviar à Play Store.
             Depois de instalar, vá em Config > Ler notificações do banco para dar o acesso.
 

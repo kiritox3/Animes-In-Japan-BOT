@@ -43,6 +43,7 @@ final class Billing implements PurchasesUpdatedListener {
     }
 
     static boolean isPremium(Context c) {
+        if (BuildConfig.UNLOCK_PREMIUM) return true;
         return NotifStore.prefs(c).getBoolean("premium", false);
     }
 

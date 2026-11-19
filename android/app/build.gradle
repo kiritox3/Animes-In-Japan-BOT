@@ -19,6 +19,12 @@ android {
         targetSdk 36
         versionCode Integer.parseInt(System.getenv('GITHUB_RUN_NUMBER') ?: '1')
         versionName "1.0." + (System.getenv('GITHUB_RUN_NUMBER') ?: '0')
+        // APK pessoal de teste: Premium liberado sem assinatura (gradle -PunlockPremium=true).
+        // O arquivo da Play Store é gerado sem isso e cobra pelo Google Play normalmente.
+        buildConfigField 'boolean', 'UNLOCK_PREMIUM', (project.findProperty('unlockPremium') == 'true') ? 'true' : 'false'
+    }
+    buildFeatures {
+        buildConfig true
     }
 
     // Assinatura. Para a Play Store, a chave vem dos segredos do GitHub (veja PUBLICAR.md):
