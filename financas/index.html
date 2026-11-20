@@ -1870,7 +1870,7 @@ function stmtSheet(pre){const opts=[...S.accounts.map(a=>['a:'+a.id,'Conta '+a.n
         let target=q('#st-to').value;if(res.card&&target.startsWith('a:')&&CC().length)target='k:'+CC()[0].id;
         const items=stmtItems(res,target);const novos=items.filter(x=>x.on).length;
         importSheet(null,false,{title:'Revisar extrato',hint:`${items.length} lançamento${items.length>1?'s':''} lido${items.length>1?'s':''} (${res.fmt}), ${novos} novo${novos===1?'':'s'}. Os desmarcados não serão salvos.`,items})};
-      const rd=new FileReader();rd.onload=()=>{const t=String(rd.result);if(/�/.test(t)){const r2=new FileReader();r2.onload=()=>go(String(r2.result));r2.readAsText(f,'windows-1252')}else go(t)};rd.onerror=()=>{q('#st-msg').textContent='Não consegui abrir o arquivo.'};rd.readAsText(f,'utf-8')}})}
+      const rd=new FileReader();rd.onload=()=>{const t=String(rd.result);if(/\uFFFD/.test(t)){const r2=new FileReader();r2.onload=()=>go(String(r2.result));r2.readAsText(f,'windows-1252')}else go(t)};rd.onerror=()=>{q('#st-msg').textContent='Não consegui abrir o arquivo.'};rd.readAsText(f,'utf-8')}})}
 
 /* ---------- boas-vindas na primeira abertura ---------- */
 function onboarding(step){step=step||1;const st=S.settings;const fin=()=>{S.onboarded=true;save();closeSheet();render()};
