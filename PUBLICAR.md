@@ -12,21 +12,22 @@ O app se chama **Trocado**. Para trocar o nome, mude:
 
 O identificador do pacote (`app.trocado`, em `android/app/build.gradle`) é permanente depois do primeiro envio à loja. Se quiser trocar, troque antes.
 
-## 2. Firebase: login e nuvem (você)
+## 2. Firebase: login com Google e nuvem (você)
 
 1. Entre em https://console.firebase.google.com e crie um projeto.
-2. **Authentication** → Começar → ative **E-mail/senha**.
+2. **Authentication** → Começar → ative **Google** e **E-mail/senha**. No provedor Google, abra "Configuração do SDK da Web" e copie o **ID do cliente Web** (termina com `.apps.googleusercontent.com`).
 3. **Firestore Database** → Criar banco → modo de produção → região `southamerica-east1` (São Paulo).
 4. Em Firestore → **Regras**, cole o conteúdo do arquivo `firestore.rules` deste repositório e publique.
-5. **Configurações do projeto** → Seus apps → adicione um app **Web** (ícone `</>`). Copie o objeto `firebaseConfig`.
-6. Cole esse objeto em `financas/index.html`, na linha `const FIREBASE_CONFIG=null;`. Exemplo:
-   ```js
-   const FIREBASE_CONFIG={apiKey:"...",authDomain:"seu-projeto.firebaseapp.com",projectId:"seu-projeto",appId:"..."};
-   ```
-   Esses valores não são senhas: quem protege os dados são as regras do passo 4.
-7. Em Authentication → Templates, ajuste o idioma do email de redefinição de senha para português.
+5. **Configurações do projeto** → Seus apps → adicione um app **Android** com o pacote `app.trocado` e a impressão digital **SHA-1**:
+   - APK de teste (chave `android/app/caixa.jks`): `FD:3A:AF:FE:76:37:03:43:E1:2A:D7:FB:AB:4F:A4:5A:9E:33:87:6F`
+   - Versão da Play Store: copie o SHA-1 de **Play Console → Integridade do app → Assinatura do app** e adicione também.
+6. Adicione um app **Web** (ícone `</>`) e copie o objeto `firebaseConfig`.
+7. Coloque a configuração no app de um destes jeitos:
+   - **Sem recompilar (uso pessoal):** no app, Config → Salvamento na nuvem → Configurar nuvem com Google. Cole o `firebaseConfig` e o ID do cliente Web.
+   - **Para todos os usuários:** em `financas/index.html`, preencha `FIREBASE_CONFIG` com o objeto e `GOOGLE_WEB_CLIENT_ID` com o ID do cliente Web.
+8. Em Authentication → Templates, ajuste o idioma do email de redefinição de senha para português.
 
-O plano gratuito do Firebase (Spark) aguenta milhares de usuários. Cada usuário usa poucos documentos (um por mês de lançamentos).
+Os valores do `firebaseConfig` não são senhas: quem protege os dados são as regras do passo 4. O login com Google no Android usa o Credential Manager (a tela do Google não abre dentro do app); por isso o SHA-1 do passo 5 é obrigatório.
 
 ## 3. Conta de desenvolvedor Google Play (você)
 

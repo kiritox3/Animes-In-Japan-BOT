@@ -49,10 +49,13 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 .iconbtn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink)}
 .newbtn{display:flex;align-items:center;gap:8px;border:0;border-radius:16px;background:var(--accent);color:var(--on-accent);font-weight:700;padding:11px 18px;font-size:16px}
 
-.monthbar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:6px;margin-top:6px}
-.monthbar button{border:0;background:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--muted)}
-.monthbar button:hover{background:var(--raised);color:var(--ink)}
-.monthbar span{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.monthbar{display:flex;align-items:center;justify-content:space-between;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:2px 4px;margin-top:6px}
+.monthbar>button{border:0;background:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--muted);flex:none}
+.monthbar>button:hover{background:var(--raised);color:var(--ink)}
+.monthbar .mlab{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-width:0;flex-wrap:wrap}
+.mnow{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:var(--accent-soft);color:var(--accent-text);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.sha{font-family:ui-monospace,monospace;font-size:12px;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:8px 10px;overflow-wrap:anywhere;flex:1;min-width:0;user-select:all}
+.monthbar span{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;white-space:nowrap}
 .monthbar span svg{color:var(--accent-text)}
 
 section{display:flex;flex-direction:column;gap:12px;margin-top:24px}
@@ -397,6 +400,7 @@ details.crow[open] summary>svg{transform:rotate(180deg)}
 .invdet .list{border-top:1px solid var(--line)}
 .invwrap{border-top:1px solid var(--line)}
 .invwrap:first-child{border-top:0}
+.gbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);background:#fff;color:#1f1f1f;border-radius:14px;padding:13px 16px;font-weight:700;font-size:15px;min-height:50px}
 /* importar notificações */
 .nitem{border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--sunk)}
 .nitem.off{opacity:.55}
@@ -671,7 +675,7 @@ function render(){applyTheme();
 }
 const cicon=(c,s,w)=>c.photo?`<img src="${esc(c.photo)}" alt="" style="width:${Math.round(s*1.5)}px;height:${Math.round(s*1.5)}px;border-radius:50%;object-fit:cover">`:c.emoji?`<span style="font-size:${Math.round(s*1.05)}px;line-height:1">${esc(c.emoji)}</span>`:ic(c.icon,s,w);
 const bub=(c,s=44)=>`<span class="bub" style="width:${s}px;height:${s}px;background:color-mix(in srgb,${c.color} 20%,transparent);color:${c.color}">${cicon(c,s>36?22:18)}</span>`;
-const monthBar=()=>`<div class="monthbar"><button type="button" data-act="prev" aria-label="Mês anterior">${ic('left',22)}</button><span>${ic('cal',20)}${monthLong(M)}</span><button type="button" data-act="next" aria-label="Próximo mês">${ic('right',22)}</button></div>`;
+const monthBar=()=>`<div class="monthbar"><button type="button" data-act="prev" aria-label="Mês anterior">${ic('left',20)}</button><div class="mlab"><span>${ic('cal',18)}${monthLong(M)}</span>${M!==CM?`<button type="button" class="mnow" data-act="thismonth" aria-label="Voltar para o mês atual">${ic('cal',13,2.4)}Mês atual</button>`:''}</div><button type="button" data-act="next" aria-label="Próximo mês">${ic('right',20)}</button></div>`;
 const cardBg=c=>`background:linear-gradient(135deg,${c.color},${c.color2||c.color})`;
 const cardDark=c=>lum(c.color)>0.5;
 
@@ -887,20 +891,23 @@ function txForm(t,pre={}){
       const date=$('#f-date').value||TODAY,desc=$('#f-desc').value.trim(),note=$('#f-note').value.trim(),time=$('#f-time').value||'',kind=$('#w-fixa').hidden?'':$('#f-kind').value,loan=!$('#w-loan').hidden&&$('#f-loan').checked?f.type:'';
       const cr=f.type==='out'&&f.method==='credito';
       if(cr&&!CC().length){toast('Cadastre um cartão de crédito primeiro');return}
+      const LB=limitSnap();
       if(editing){
         Object.assign(t,{amount,desc,note,date,time,kind,loan,catId:f.catId,sub:f.sub||''});
         if(cr){const c=cardById(grouped?t.card:$('#f-card').value);t.method='credito';t.card=c.id;t.inv=addM(invOf(c,date),(t.inst?t.inst.n:1)-1);t.paid=true}
         else{t.method=f.method;t.accountId=$('#f-acc').value;t.paid=f.paid;if(!grouped){t.card='';t.inv='';t.inst=null}}
-        return done('Salvo')}
+        appNotify('Lançamento atualizado',`${desc||catById(f.catId).name} · ${fmt(amount)}`);limitCheck(LB);return done('Salvo')}
       const base={type:f.type,desc,note,time,kind,loan,catId:f.catId,sub:f.sub||'',method:f.method};
       if(cr){const c=cardById($('#f-card').value);const n=Math.max(1,Math.min(48,parseInt($('#f-n').value)||1));const g=n>1?uid():null;const per=Math.floor(amount/n);
         for(let i=0;i<n;i++)S.tx.push({...base,id:uid(),amount:i===0?amount-per*(n-1):per,date,card:c.id,inv:addM(invOf(c,date),i),inst:n>1?{n:i+1,of:n}:null,group:g,paid:true,accountId:''});
-        M=invOf(c,date);return done(n>1?`Compra em ${n}x adicionada`:'Compra no cartão adicionada')}
+        appNotify(`Compra no crédito: ${fmt(amount)}`,`${desc||catById(f.catId).name} · ${n>1?n+'x de '+fmt(per)+' · ':''}fatura de ${monthName(invOf(c,date))} (${c.name})`);limitCheck(LB);
+        return done(`${n>1?'Compra em '+n+'x adicionada':'Compra no cartão adicionada'} · fatura de ${monthName(invOf(c,date))}`)}
       const n=Math.max(1,Math.min(60,parseInt($('#f-rep').value)||1));const g=n>1?uid():null;
       for(let i=0;i<n;i++)S.tx.push({...base,id:uid(),amount,date:dayIn(addM(ymOf(date),i),+date.slice(8)),accountId:$('#f-acc').value,card:'',inv:'',inst:null,group:g,paid:i===0?f.paid:false});
-      M=ymOf(date);done(n>1?`Lançado por ${n} meses`:(f.type==='in'?'Entrada adicionada':'Gasto adicionado'))};
-    if(editing){$('#del1').onclick=e=>armDanger(e.currentTarget,()=>{S.tx=S.tx.filter(x=>x.id!==t.id);done('Excluído')});
-      const da=$('#delAll');if(da)da.onclick=e=>armDanger(e.currentTarget,()=>{S.tx=S.tx.filter(x=>x.group!==t.group);done('Excluídos')})}
+      appNotify((f.type==='in'?(loan?'Empréstimo recebido: ':'Entrada anotada: '):(loan?'Devolução anotada: ':'Gasto anotado: '))+fmt(amount),`${desc||catById(f.catId).name} · ${methodBy(f.method).l}${f.paid?'':' · '+(f.type==='in'?'a receber':'a pagar')+' em '+dNum(date)}${n>1?' · repetido por '+n+' meses':''}`);limitCheck(LB);
+      done((n>1?`Lançado por ${n} meses`:(f.type==='in'?'Entrada adicionada':'Gasto adicionado'))+(ymOf(date)!==M?' em '+monthName(ymOf(date)):''))};
+    if(editing){$('#del1').onclick=e=>armDanger(e.currentTarget,()=>{S.tx=S.tx.filter(x=>x.id!==t.id);appNotify('Lançamento excluído',`${t.desc||catById(t.catId).name} · ${fmt(t.amount)}`);done('Excluído')});
+      const da=$('#delAll');if(da)da.onclick=e=>armDanger(e.currentTarget,()=>{const nn=S.tx.filter(x=>x.group===t.group).length;S.tx=S.tx.filter(x=>x.group!==t.group);appNotify('Lançamentos excluídos',`${nn} lançamentos de ${t.desc||catById(t.catId).name}.`);done('Excluídos')})}
   })}
 
 /* ----- fatura ----- */
@@ -918,7 +925,7 @@ function invoiceSheet(cid,k){const c=cardById(cid);if(!c)return;
    ${p?`<div class="btns" style="margin-bottom:14px"><button type="button" class="btn ghost" id="unpay">Desfazer pagamento</button></div>`:''}
    <div class="panel list" style="margin-bottom:12px">${items.length?items.map(txRow).join(''):'<div class="empty">Nenhuma compra nesta fatura.</div>'}</div>
    <div class="btns"><button type="button" class="btn ghost" data-act="newon" data-card="${cid}">${ic('plus',18)}Nova compra neste cartão</button></div>`,sh=>{
-    const f=sh.querySelector('#payf');if(f)f.onsubmit=e=>{e.preventDefault();S.paidInv[invKey(cid,k)]={acc:sh.querySelector('#pay-acc').value,date:TODAY};done('Fatura paga')};
+    const f=sh.querySelector('#payf');if(f)f.onsubmit=e=>{e.preventDefault();S.paidInv[invKey(cid,k)]={acc:sh.querySelector('#pay-acc').value,date:TODAY};appNotify(`Fatura ${c.name} paga`,`${fmt(tot)} pago com ${(accById(sh.querySelector('#pay-acc').value)||{name:'sua conta'}).name}.`);done('Fatura paga')};
     const u=sh.querySelector('#unpay');if(u)u.onclick=()=>{delete S.paidInv[invKey(cid,k)];done('Pagamento desfeito')}})}
 
 /* ----- cartão ----- */
@@ -1022,7 +1029,7 @@ function goalForm(g){const editing=!!g;
     ${editing?`<div class="btns"><button type="button" class="btn danger" id="gdel">${ic('trash',18)}Excluir meta</button></div>`:''}</form>`,sh=>{const $=s=>sh.querySelector(s);
     $('#gf').onsubmit=e=>{e.preventDefault();const name=$('#g-name').value.trim(),target=parseMoney($('#g-t').value);if(!name||!(target>0)){toast('Preencha o nome e o valor da meta');return}
       let saved=Math.max(0,parseMoney($('#g-s').value)||0);const ad=$('#g-add')?parseMoney($('#g-add').value):0;if(ad>0)saved+=ad;
-      const o={name,target,saved,deadline:$('#g-d').value||''};if(editing)Object.assign(g,o);else S.plan.goals.push({id:uid(),...o});done(editing?'Meta salva':'Meta criada')};
+      const o={name,target,saved,deadline:$('#g-d').value||''};if(editing)Object.assign(g,o);else{S.plan.goals.push({id:uid(),...o});appNotify('Meta criada',`${name}: guardar ${fmt(target)}.`)}if(ad>0)appNotify('Dinheiro guardado',`${fmt(ad)} na meta ${name}. Agora são ${fmt(saved)} de ${fmt(target)}.`);if(saved>=target&&(!editing||g.saved<target||ad>0))appNotify('Meta atingida!',`Você completou ${name}.`);done(editing?'Meta salva':'Meta criada')};
     const del=$('#gdel');if(del)del.onclick=e=>armDanger(e.currentTarget,()=>{S.plan.goals=S.plan.goals.filter(x=>x.id!==g.id);done('Meta excluída')})})}
 
 /* ----- posso comprar isso? ----- */
@@ -1192,7 +1199,7 @@ function transferForm(tr,fromId){const editing=!!tr;if(S.accounts.length<2){toas
     ${editing?`<div class="btns"><button type="button" class="btn danger" id="trdel">${ic('trash',18)}Excluir transferência</button></div>`:''}</form>`,sh=>{const $=s=>sh.querySelector(s);
     $('#trf').onsubmit=e=>{e.preventDefault();const amount=parseMoney($('#t-v').value),from=$('#t-from').value,to=$('#t-to').value;
       if(!(amount>0)){toast('Informe um valor maior que zero');return}if(from===to){toast('Escolha contas diferentes');return}
-      const o={from,to,amount,date:$('#t-d').value||TODAY};if(editing)Object.assign(tr,o);else S.transfers.push({id:uid(),...o});done(editing?'Transferência salva':'Transferência registrada')};
+      const o={from,to,amount,date:$('#t-d').value||TODAY};if(editing)Object.assign(tr,o);else{S.transfers.push({id:uid(),...o});appNotify('Transferência registrada',`${fmt(amount)} de ${(accById(from)||{}).name||'conta'} para ${(accById(to)||{}).name||'conta'}.`)}done(editing?'Transferência salva':'Transferência registrada')};
     if(editing)$('#trdel').onclick=e=>armDanger(e.currentTarget,()=>{S.transfers=S.transfers.filter(x=>x.id!==tr.id);done('Transferência excluída')})})}
 function incomeForm(r){const editing=!!r;const cats=catsOf('in');
   openSheet(`<h3>${editing?'Editar renda':'Nova renda'}</h3><form class="form" id="rf" novalidate>
@@ -1292,7 +1299,7 @@ function importSheet(prefill,inbox){let items=inbox?(S.inbox||[]).slice():[];
         if(it.type==='in'&&!IN_METHODS.includes(it.method))it.method='pix';const c=catsOf(it.type);it.catId=(c.find(x=>x.name==='Outros')||c[0]||{}).id||'';draw();return}
       const bk=e.target.closest('[data-block]');if(bk){const pkg=bk.dataset.block,it0=items.find(x=>x.pkg===pkg);S.settings.blockedApps=[...new Set([...(S.settings.blockedApps||[]),pkg])];S.settings.appNames=Object.assign(S.settings.appNames||{},{[pkg]:it0&&it0.app||pkg});
         items=items.filter(x=>x.pkg!==pkg);S.inbox=(S.inbox||[]).filter(x=>x.pkg!==pkg);save();draw();syncNative();toast('Não vou mais ler '+(it0&&it0.app||'esse app'));return}
-      if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);ok.forEach(addParsed);const n=ok.length;
+      if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);const LB=limitSnap();ok.forEach(addParsed);const n=ok.length;if(n){appNotify(`${n} lançamento${n>1?'s':''} adicionado${n>1?'s':''}`,'Vindos das notificações do banco.');limitCheck(LB)}
         if(inbox){const ids=new Set(items.map(x=>x.id));S.inbox=(S.inbox||[]).filter(x=>!ids.has(x.id))}
         done(n?n+' lançamento'+(n===1?'':'s')+' adicionado'+(n===1?'':'s'):'Descartados')}})})}
 /* ================= app Android: leitura automática das notificações ================= */
@@ -1311,6 +1318,7 @@ function andPull(){if(!AND)return;let arr=[];try{arr=JSON.parse(AND.pull()||'[]'
     if((n.auto||S.settings.autoImport==='auto')&&prem()&&!it.dup&&!it.low){addParsed(it);added++}else{S.inbox.push(it);queued++}});
   if(test){openSheet(`<h3>Teste funcionou</h3><div class="capbox">${ic('check',28,2.4)}<div><b>A leitura das notificações está ativa</b><p>O ${APP_NAME} recebeu e entendeu a notificação de teste. Ela não foi anotada.</p></div></div>`)}
   if(!added&&!queued)return;save();if(!scrim)render();
+  if(added)appNotify(`${added} lançamento${added>1?'s':''} anotado${added>1?'s':''} das notificações`,'Toque para ver no app.');
   toast(added&&queued?`${added} adicionado${added>1?'s':''}, ${queued} para revisar`:added?`${added} lançamento${added>1?'s':''} adicionado${added>1?'s':''} das notificações`:`${queued} lançamento${queued>1?'s':''} para revisar`)}
 window.caixaNotif=andPull;
 window.caixaBack=()=>{if(scrim){closeSheet();return true}if(page){page=null;render();return true}if(tab!=='inicio'){tab='inicio';render();window.scrollTo(0,0);return true}return false};
@@ -1420,13 +1428,15 @@ async function privacySheet(){let html='';try{const r=await fetch('privacidade.h
 // Cole aqui a configuração do seu projeto Firebase (Console do Firebase > Configurações do projeto > Seus apps > Web).
 // Esses valores não são secretos: a proteção vem das regras do Firestore (arquivo firestore.rules).
 const FIREBASE_CONFIG=null;
+// ID do cliente Web do Google (Firebase > Authentication > Google > Configuração do SDK da Web). Usado para entrar com Google no Android.
+const GOOGLE_WEB_CLIENT_ID='';
 const PRIVACY_URL='https://kiritox3.github.io/Animes-In-Japan-BOT/financas/privacidade.html';
 const FB={auth:null,db:null,user:null,ready:false};
-const fbAvailable=()=>!!FIREBASE_CONFIG&&!(window.claude&&typeof window.claude.use==='function');
+const fbAvailable=()=>!!fbConf()&&!(window.claude&&typeof window.claude.use==='function');
 function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
 async function fbInit(){
   try{for(const f of['app','auth','firestore'])await loadScript('vendor/firebase/firebase-'+f+'-compat.js')}catch(e){setCloud('off');return}
-  try{firebase.initializeApp(FIREBASE_CONFIG);FB.auth=firebase.auth();FB.db=firebase.firestore();FB.auth.languageCode='pt'}catch(e){setCloud('off');return}
+  try{firebase.initializeApp(fbConf().cfg);FB.auth=firebase.auth();FB.db=firebase.firestore();FB.auth.languageCode='pt'}catch(e){setCloud('off');return}
   try{await FB.db.enablePersistence({synchronizeTabs:true})}catch(e){}
   FB.ready=true;FB.auth.onAuthStateChanged(u=>{FB.user=u;fbAttach()})}
 function fbAttach(){if(CLOUD.unsub){try{CLOUD.unsub()}catch(e){}CLOUD.unsub=null}clearTimeout(CLOUD.to);CLOUD.ready=false;CLOUD.col=null;CLOUD.hashes={};CLOUD.pending=null;
@@ -1437,18 +1447,21 @@ function fbAttach(){if(CLOUD.unsub){try{CLOUD.unsub()}catch(e){}CLOUD.unsub=null
   CLOUD.to=setTimeout(()=>{if(!CLOUD.ready)setCloud('nonet')},10000);
   CLOUD.unsub=CLOUD.col.onSnapshot(cloudSnap,e=>{clearTimeout(CLOUD.to);setCloud('err',e&&e.code)})}
 const FB_ERR={'auth/invalid-email':'Email inválido.','auth/missing-password':'Digite a senha.','auth/wrong-password':'Email ou senha incorretos.','auth/invalid-credential':'Email ou senha incorretos.','auth/user-not-found':'Não existe conta com esse email.',
-  'auth/email-already-in-use':'Já existe uma conta com esse email. Toque em Entrar.','auth/weak-password':'A senha precisa ter pelo menos 6 caracteres.','auth/network-request-failed':'Sem internet. Tente de novo.','auth/too-many-requests':'Muitas tentativas. Espere alguns minutos.','auth/requires-recent-login':'Por segurança, saia e entre de novo antes de excluir a conta.'};
+  'auth/email-already-in-use':'Já existe uma conta com esse email. Toque em Entrar.','auth/weak-password':'A senha precisa ter pelo menos 6 caracteres.','auth/network-request-failed':'Sem internet. Tente de novo.','auth/too-many-requests':'Muitas tentativas. Espere alguns minutos.','auth/requires-recent-login':'Por segurança, saia e entre de novo antes de excluir a conta.','auth/popup-closed-by-user':'Login cancelado.','auth/account-exists-with-different-credential':'Esse email já entrou de outro jeito. Use email e senha.','auth/operation-not-allowed':'Ative o provedor Google no Firebase (Authentication).','auth/invalid-api-key':'A apiKey da configuração está errada.','auth/unauthorized-domain':'Adicione este endereço em Authentication > Domínios autorizados.'};
 const fbErr=e=>FB_ERR[e&&e.code]||'Não deu certo. Tente de novo.';
 function fbSheet(){
   if(!FB.ready){openSheet(`<h3>Conta e nuvem</h3><p class="hint">Conectando… Verifique a internet e tente de novo em instantes.</p>`);return}
   const u=FB.user;
   if(!u){openSheet(`<h3>Entrar ou criar conta</h3><p class="hint" style="margin-bottom:14px">Com uma conta, seus dados ficam salvos na nuvem e você usa em outro celular.${prem()?'':' O backup na nuvem é um recurso Premium.'}</p>
+    <button type="button" class="gbtn" id="fb-google"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#FBBC05" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.1 1.1 4.6L6.4 14z"/><path fill="#EA4335" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10c.8-2.3 3-4.1 5.6-4.1z"/></svg>Entrar com Google</button>
+    <p class="hint" style="text-align:center;margin:12px 0">ou use email e senha</p>
     <form class="form" id="fbf" novalidate><div class="field"><label for="fb-e">Email</label><input id="fb-e" type="email" autocomplete="email" inputmode="email"></div>
     <div class="field"><label for="fb-p">Senha</label><input id="fb-p" type="password" autocomplete="current-password" minlength="6"></div>
     <p class="hint" id="fb-msg" style="color:var(--out)"></p>
     <div class="btns"><button class="btn" type="submit" id="fb-in">Entrar</button></div><div class="btns"><button type="button" class="btn ghost" id="fb-new">Criar conta</button></div>
     <p style="text-align:center"><button type="button" class="link" id="fb-forgot" style="margin:0 auto">Esqueci minha senha</button></p></form>`,sh=>{const q=s=>sh.querySelector(s);
       const run=async(fn,okMsg)=>{q('#fb-msg').textContent='';sh.querySelectorAll('button').forEach(b=>b.disabled=true);try{await fn();closeSheet();if(okMsg)toast(okMsg)}catch(e){q('#fb-msg').textContent=fbErr(e)}sh.querySelectorAll('button').forEach(b=>b.disabled=false)};
+      q('#fb-google').onclick=()=>googleLogin();
       q('#fbf').onsubmit=e=>{e.preventDefault();run(()=>FB.auth.signInWithEmailAndPassword(q('#fb-e').value.trim(),q('#fb-p').value),'Você entrou na sua conta')};
       q('#fb-new').onclick=()=>run(()=>FB.auth.createUserWithEmailAndPassword(q('#fb-e').value.trim(),q('#fb-p').value),'Conta criada');
       q('#fb-forgot').onclick=()=>{const em=q('#fb-e').value.trim();if(!em){q('#fb-msg').textContent='Digite seu email acima.';return}FB.auth.sendPasswordResetEmail(em).then(()=>toast('Enviamos um link para '+em),e=>{q('#fb-msg').textContent=fbErr(e)})}});return}
@@ -1458,9 +1471,9 @@ function fbSheet(){
    ${prem()?`<div class="btns"><button type="button" class="btn" id="fb-sync">${ic('cloud',20)}Sincronizar agora</button></div>`:`<div class="btns"><button type="button" class="btn" data-act="premium" data-v="nuvem">${ic('trophy',20)}Ativar backup na nuvem</button></div>`}
    <div class="btns"><button type="button" class="btn ghost" id="fb-out">Sair da conta</button></div>
    <div class="btns"><button type="button" class="btn danger" id="fb-del">${ic('trash',18)}Excluir conta e dados da nuvem</button></div>
-   <p class="hint" style="margin-top:8px">Sair ou excluir a conta não apaga os dados deste celular.</p>`,sh=>{const q=s=>sh.querySelector(s);
+   <p class="hint" style="margin-top:8px">Sair ou excluir a conta não apaga os dados deste celular.</p>${FIREBASE_CONFIG?'':`<p style="text-align:center"><button type="button" class="link" data-act="cloudsetup" style="margin:0 auto">Configuração da nuvem</button></p>`}`,sh=>{const q=s=>sh.querySelector(s);
     if(q('#fb-sync'))q('#fb-sync').onclick=()=>{if(!CLOUD.ready){toast('Ainda conectando à nuvem');return}for(const k in CLOUD.hashes)CLOUD.hashes[k]='';cloudPush().then(()=>{if(CLOUD.st==='ok')toast('Tudo salvo na nuvem')})};
-    q('#fb-out').onclick=()=>{FB.auth.signOut().then(()=>{S.cloudUser='';persistLocal();closeSheet();toast('Você saiu da conta')})};
+    q('#fb-out').onclick=()=>{try{if(AND)AND.googleSignOut()}catch(err){}FB.auth.signOut().then(()=>{S.cloudUser='';persistLocal();closeSheet();toast('Você saiu da conta')})};
     q('#fb-del').onclick=e=>armDanger(e.currentTarget,async()=>{try{const col=FB.db.collection('users').doc(u.uid).collection('data');const snap=await col.get();for(const d of snap.docs)await d.ref.delete();await FB.db.collection('users').doc(u.uid).delete().catch(()=>{});await u.delete();S.cloudUser='';persistLocal();closeSheet();toast('Conta excluída')}catch(err){toast(fbErr(err))}})})}
 /* ================= v3: Início, Análises e Config completos ================= */
 const APP_NAME='Trocado';
@@ -1551,7 +1564,7 @@ function vInicio(){const u=S.settings.user||{};const nm=u.name||CLOUD.name||'';
   return[h,body]}
 function sResumo(){const o=monthOut(HM),i=monthIn(HM),ol=outlook();const sal=saldoTotal(),res=S.settings.reserveDeduct?reservesTotal():0;const lim=S.plan.limit;
   const pct=lim?Math.round(o.total/lim*1000)/10:0;const warn=ol.perDay<=0||(lim&&o.total>lim)||ol.pagar>ol.saldo;
-  return `<section><div class="sec-h"><h2>Resumo</h2><button type="button" class="mpill" data-act="hmonth">${monthLong(HM)} ${ic('down',18,2.4)}</button></div>
+  return `<section><div class="sec-h"><h2>Resumo</h2><span style="display:flex;gap:6px;align-items:center">${HM!==CM?`<button type="button" class="mnow" data-act="sethm" data-v="${CM}">Mês atual</button>`:''}<button type="button" class="mpill" data-act="hmonth">${monthLong(HM)} ${ic('down',18,2.4)}</button></span></div>
   <div class="rhero">
    <div class="rrow"><span class="rk">${ic('wallet',22)}<b>Saldo das contas</b><button type="button" class="ibtn" data-act="saldoinfo" aria-label="Como é calculado">${ic('info',18)}</button></span><button type="button" class="ibtn" data-act="hide" aria-label="${S.settings.hide?'Mostrar valores':'Esconder valores'}">${ic(S.settings.hide?'eyeoff':'eye',22)}</button></div>
    <div class="big num">${fmt(sal-res)}</div>
@@ -1684,7 +1697,7 @@ function monthShare(m){const o=monthOut(m),i=monthIn(m),by=catSpend(m);const top
    <div class="tiles" style="margin-bottom:12px"><div class="tile"><small>Entradas</small><span class="v num pos">${fmt(i.rec)}</span></div><div class="tile"><small>Gastos</small><span class="v num">${fmt(o.total)}</span></div><div class="tile"><small>Sobrou</small><span class="v num ${sob<0?'neg':''}">${fmt(sob)}</span></div><div class="tile"><small>Lançamentos</small><span class="v num">${S.tx.filter(t=>monthOfTx(t)===m).length}</span></div></div>
    <div class="panel pad" style="margin-bottom:12px"><b>Onde mais gastou</b>${top.map(([id,v])=>{const c=catById(id);return `<div class="kv"><span style="display:flex;gap:8px;align-items:center">${cicon(c,18)}${esc(c.name)}</span><b class="num">${fmt(v)}</b></div>`}).join('')||'<p class="hint">Sem gastos.</p>'}</div>
    <div class="btns"><button type="button" class="btn" id="ms-share">Compartilhar</button><button type="button" class="btn ghost" id="ms-copy">Copiar texto</button></div>`,sh=>{
-    sh.querySelector('#ms-share').onclick=()=>{if(AND){try{AND.shareText('Meu mês no '+APP_NAME,txt)}catch(e){}}else if(navigator.share){navigator.share({text:txt}).catch(()=>{})}else{try{navigator.clipboard.writeText(txt).then(()=>toast('Texto copiado'))}catch(e){}}};
+    sh.querySelector('#ms-share').onclick=()=>{if(AND){try{AND.shareText('Meu mês no '+APP_NAME,txt)}catch(e){}}else if(navigator.share){navigator.share({text:txt}).catch(()=>{})}else{try{navigator.clipboard.writeText(txt).then(()=>toast('Texto copiado'),()=>toast('Não consegui copiar'))}catch(e){toast('Não consegui copiar')}}};
     sh.querySelector('#ms-copy').onclick=()=>{try{navigator.clipboard.writeText(txt).then(()=>toast('Texto copiado'),()=>toast('Não consegui copiar'))}catch(e){toast('Não consegui copiar')}}})}
 
 /* ---------- CONFIG ---------- */
@@ -1738,6 +1751,7 @@ function vConfig(){const st=S.settings,u=st.user||{};
     ${crow('bars','#4ADE95','Análises','Escolha e ordene os gráficos','data-act="anscfg"')}
     ${crow('wallet','#38D6C4','Descontar reservas do saldo','Mostra o saldo sem o dinheiro guardado nas metas','',`<input type="checkbox" class="toggle" id="resded" ${st.reserveDeduct?'checked':''} aria-label="Descontar reservas do saldo">`)}
     ${crow('eye','#9D9CAA','Esconder valores','Mostra ••••• no lugar dos números','',`<input type="checkbox" class="toggle" id="hidevals" ${st.hide?'checked':''} aria-label="Esconder valores">`)}
+    ${AND?crow('bell','#F5C451','Avisos do app','Notificação quando você anota, paga uma fatura, guarda dinheiro ou passa de um limite','',`<input type="checkbox" class="toggle" id="appalerts" ${st.appAlerts!==false?'checked':''} aria-label="Avisos do app">`):''}
     ${crow('clock','#7C8CFF','Lembretes','Fatura e contas vencendo, limite de categoria e confirmação do salário','',`<input type="checkbox" class="toggle" id="remtog" ${st.reminders?'checked':''} aria-label="Lembretes">`)}
     <div class="cfgrow"><span class="cico" style="background:color-mix(in srgb,#4ADE95 18%,transparent);color:#4ADE95">${ic('bolt',22)}</span><span class="n"><b>Destaque em Gastos</b><small>Terceiro número do topo</small></span><select id="hl" style="border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:9px;max-width:130px">${HIGHLIGHTS.map(([k,l])=>`<option value="${k}" ${st.highlight===k?'selected':''}>${l}</option>`).join('')}</select></div>
   </div></section>
@@ -1755,6 +1769,55 @@ function vConfig(){const st=S.settings,u=st.user||{};
    ${FB.user?`<button type="button" class="logout" data-act="fbout">${ic('logout',22)}Sair da conta</button><p style="text-align:center;margin:6px 0 0"><button type="button" class="link" data-act="cloud" style="margin:0 auto;color:var(--muted);text-decoration:underline">Excluir minha conta permanentemente</button></p>`:''}
    <p class="hint" style="text-align:center;margin-top:14px">${esc(APP_NAME)} v${APP_VERSION}${AND?' · Android '+esc((()=>{try{return AND.version()}catch(e){return''}})()):''}</p></section>`;
   return['',body]}
+/* ================= v4: avisos do app, mês atual, login com Google ================= */
+const APK_SHA1='FD:3A:AF:FE:76:37:03:43:E1:2A:D7:FB:AB:4F:A4:5A:9E:33:87:6F';
+/** Aviso na barra de notificações do Android (só no app instalado). */
+function appNotify(title,text){if(!AND||S.settings.appAlerts===false)return;try{AND.notify(title,text||'')}catch(e){}}
+function limitSnap(){return{c:catSpend(CM),t:monthOut(CM).total}}
+/** Avisa quando um limite passa de 80% ou estoura depois de um lançamento. */
+function limitCheck(b){if(!b)return;const a=limitSnap();
+  for(const id in S.plan.budgets){const lim=S.plan.budgets[id];if(!lim)continue;const was=b.c[id]||0,now=a.c[id]||0,c=catById(id);
+    if(was<=lim&&now>lim)appNotify('Limite de '+c.name+' estourado',`${fmt(now)} de ${fmt(lim)} em ${monthName(CM)}. Passou ${fmt(now-lim)}.`);
+    else if(was<lim*.8&&now>=lim*.8&&now<=lim)appNotify('Limite de '+c.name+' quase no fim',`Você já usou ${Math.round(now/lim*100)}%: ${fmt(now)} de ${fmt(lim)}.`)}
+  const L=S.plan.limit;if(L&&b.t<=L&&a.t>L)appNotify('Limite do mês estourado',`Os gastos de ${monthName(CM)} chegaram a ${fmt(a.t)}, acima de ${fmt(L)}.`)}
+/** Uma vez por dia, ao abrir o app: contas e faturas vencendo hoje ou amanhã. */
+function dailyNotify(){if(!AND||S.settings.appAlerts===false||!S.settings.reminders)return;if(S.settings.remDay===TODAY)return;
+  const due=upcoming(1);S.settings.remDay=TODAY;persistLocal();if(!due.length)return;
+  const tot=due.reduce((s,x)=>s+x.v,0);appNotify(due.length===1?due[0].name+(due[0].d===TODAY?' vence hoje':' vence amanhã'):due.length+' contas vencendo até amanhã',due.length===1?'Valor de '+fmt(due[0].v)+'.':due.map(x=>x.name).join(', ')+' · total '+fmt(tot)+'.')}
+
+/* ---------- configuração do Firebase sem precisar recompilar ---------- */
+const FB_LOCAL='trocado.fb';
+function fbConf(){if(FIREBASE_CONFIG)return{cfg:FIREBASE_CONFIG,client:GOOGLE_WEB_CLIENT_ID};try{const o=JSON.parse(localStorage.getItem(FB_LOCAL)||'null');if(o&&o.cfg&&o.cfg.apiKey&&o.cfg.projectId)return o}catch(e){}return null}
+function parseFbConfig(t){const o={};['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'].forEach(k=>{const m=new RegExp('["\']?'+k+'["\']?\\s*:\\s*["\']([^"\']+)["\']').exec(t||'');if(m)o[k]=m[1]});return o.apiKey&&o.projectId&&o.appId?o:null}
+function cloudSetupSheet(){const c=fbConf()||{cfg:null,client:''};
+  openSheet(`<h3>Nuvem com Google</h3><p class="hint" style="margin-bottom:12px">Para salvar na nuvem com sua conta Google (Gmail), o app usa um projeto Firebase seu, grátis. Faça uma vez:</p>
+   <div class="panel pad" style="font-size:14px;display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+    <div><b>1.</b> Crie um projeto em <b>console.firebase.google.com</b>.</div>
+    <div><b>2.</b> Em <b>Authentication</b>, ative os provedores <b>Google</b> e <b>E-mail/senha</b>. No provedor Google, abra "Configuração do SDK da Web" e copie o <b>ID do cliente Web</b>.</div>
+    <div><b>3.</b> Crie o <b>Firestore</b> e cole as regras do arquivo <b>firestore.rules</b> do projeto.</div>
+    <div><b>4.</b> Em Configurações do projeto, adicione um app <b>Android</b> com o pacote <b>app.trocado</b> e a impressão digital SHA-1 abaixo.</div>
+    <div><b>5.</b> Adicione também um app <b>Web</b> e copie o <b>firebaseConfig</b>.</div></div>
+   <div class="field" style="margin-bottom:14px"><span class="lb">SHA-1 deste APK</span><div style="display:flex;gap:8px;align-items:center"><code class="sha">${APK_SHA1}</code><button type="button" class="obtn" id="cp-sha">Copiar</button></div></div>
+   <form class="form" id="fbcf" novalidate><div class="field"><label for="fbc-cfg">firebaseConfig (cole tudo)</label><textarea class="out" id="fbc-cfg" placeholder='apiKey: "...", authDomain: "...", projectId: "...", appId: "..."'>${c.cfg?esc(JSON.stringify(c.cfg,null,1)):''}</textarea></div>
+   <div class="field"><label for="fbc-cl">ID do cliente Web do Google</label><input id="fbc-cl" value="${esc(c.client||'')}" placeholder="123-abc.apps.googleusercontent.com" autocomplete="off"></div>
+   <p class="hint" id="fbc-msg" style="color:var(--out)"></p>
+   <div class="btns"><button class="btn" type="submit">Salvar e conectar</button></div>
+   ${fbConf()&&!FIREBASE_CONFIG?`<div class="btns"><button type="button" class="btn danger" id="fbc-del">Remover configuração</button></div>`:''}</form>`,sh=>{const q=s=>sh.querySelector(s);
+    q('#cp-sha').onclick=()=>{try{navigator.clipboard.writeText(APK_SHA1).then(()=>toast('SHA-1 copiado'),()=>toast('Selecione e copie o código'))}catch(e){toast('Selecione e copie o código')}};
+    q('#fbcf').onsubmit=e=>{e.preventDefault();const cfg=parseFbConfig(q('#fbc-cfg').value),cl=q('#fbc-cl').value.trim();
+      if(!cfg){q('#fbc-msg').textContent='Não achei apiKey, projectId e appId no texto colado.';return}
+      if(cl&&!/\.apps\.googleusercontent\.com$/.test(cl)){q('#fbc-msg').textContent='O ID do cliente Web termina com .apps.googleusercontent.com.';return}
+      try{localStorage.setItem(FB_LOCAL,JSON.stringify({cfg,client:cl}))}catch(err){q('#fbc-msg').textContent='Não consegui salvar a configuração.';return}
+      toast('Configuração salva. Conectando…');setTimeout(()=>location.reload(),600)};
+    const del=q('#fbc-del');if(del)del.onclick=e=>armDanger(e.currentTarget,()=>{try{localStorage.removeItem(FB_LOCAL)}catch(err){}location.reload()})})}
+
+/* ---------- entrar com Google ---------- */
+async function googleLogin(){const conf=fbConf();if(!conf||!FB.ready){toast('Configure a nuvem primeiro');return}
+  if(AND){if(!conf.client){toast('Falta o ID do cliente Web do Google na configuração da nuvem');cloudSetupSheet();return}try{AND.googleSignIn(conf.client)}catch(e){toast('Atualize o app para entrar com Google')}return}
+  try{await FB.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());closeSheet();toast('Você entrou com Google')}catch(e){toast(fbErr(e))}}
+window.caixaGoogle=json=>{let d;try{d=JSON.parse(json)}catch(e){return}
+  if(d.status!=='ok'){toast({canceled:'Login cancelado',no_account:'Nenhuma conta Google no celular. Adicione uma em Configurações > Contas.',missing_client:'Falta o ID do cliente Web na configuração da nuvem',failed:'Não deu para entrar com Google. Confira o SHA-1 e o ID do cliente Web no Firebase.'}[d.code]||'Não deu para entrar com Google');return}
+  FB.auth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(d.idToken)).then(()=>{closeSheet();toast('Você entrou com '+(d.email||'Google'));appNotify('Nuvem conectada','Seus dados vão ser salvos na conta '+(d.email||'Google')+'.')},e=>toast(fbErr(e)))};
 /* ================= nuvem (conta do Claude / email) ================= */
 const CLOUD={st:'conn',code:'',id:null,email:'',name:'',col:null,ready:false,pushing:false,dirty:false,hashes:{},timer:null,to:null,last:0,pending:null};
 const DEVICE=(()=>{try{let d=localStorage.getItem('caixa.device');if(!d){d=uid();localStorage.setItem('caixa.device',d)}return d}catch(e){return 'd'+uid()}})();
@@ -1819,8 +1882,8 @@ function cloudSheet(){const on=!!CLOUD.col;
     <div class="btns"><button type="button" class="btn" id="cl-now">${ic('cloud',20)}Sincronizar agora</button></div>
     <div class="btns"><button type="button" class="btn ghost" id="cl-get">Baixar da nuvem de novo</button></div>
     ${CLOUD.st==='choose'?`<div class="btns"><button type="button" class="btn ghost" id="cl-choose">Escolher qual versão manter</button></div>`:''}`
-   :`<div class="panel pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:flex-start"><span style="color:var(--muted)">${ic('cloudoff',26)}</span><div><b>${CLOUD.st==='signed'?'Entre na sua conta do Claude':'Nuvem indisponível neste endereço'}</b><p class="hint" style="margin-top:4px">${CLOUD.st==='signed'?'Faça login no claude.ai com seu email e abra o link do app de novo.':(AND?'No app Android os dados ficam salvos neste celular. A nuvem funciona no link do Claude, com sua conta (email). Use Fazer backup e Restaurar backup para levar os dados entre os dois.':'O salvamento na nuvem funciona quando o app é aberto pelo link do Claude, com sua conta (email). Aberto direto do arquivo ou do GitHub, os dados ficam só neste aparelho.')}</p></div></div>
-    <p class="hint">Enquanto isso, use Fazer backup em Config para guardar uma cópia.</p>`;
+   :`<div class="panel pad" style="margin-bottom:14px;display:flex;gap:12px;align-items:flex-start"><span style="color:var(--muted)">${ic('cloudoff',26)}</span><div><b>${CLOUD.st==='signed'?'Entre na sua conta do Claude':'Nuvem indisponível neste endereço'}</b><p class="hint" style="margin-top:4px">${CLOUD.st==='signed'?'Faça login no claude.ai com seu email e abra o link do app de novo.':(AND?'Para salvar na nuvem com sua conta Google (Gmail), conecte um projeto Firebase grátis. Leva uns 10 minutos e é feito uma vez só.':'O salvamento na nuvem funciona quando o app é aberto pelo link do Claude, com sua conta (email). Aberto direto do arquivo ou do GitHub, os dados ficam só neste aparelho.')}</p></div></div>
+    ${window.claude&&typeof window.claude.use==='function'?'':`<div class="btns" style="margin-bottom:12px"><button type="button" class="btn" data-act="cloudsetup">${ic('cloud',20)}Configurar nuvem com Google</button></div>`}<p class="hint">Enquanto isso, use Fazer backup em Config para guardar uma cópia.</p>`;
   openSheet(`<h3>Salvamento na nuvem</h3>${body}`,sh=>{const q=s=>sh.querySelector(s);
     if(q('#cl-now'))q('#cl-now').onclick=()=>{if(!CLOUD.ready){toast('Ainda conectando à nuvem');return}for(const k in CLOUD.hashes)CLOUD.hashes[k]='';cloudPush().then(()=>{if(CLOUD.st==='ok')toast('Tudo salvo na nuvem')})};
     if(q('#cl-get'))q('#cl-get').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{const snap=await CLOUD.col.get();const docs={};snap.docs.forEach(d=>{if(d.exists)docs[d.id]=d.data()});
@@ -1833,6 +1896,7 @@ document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');if(!a)return;const v=a.dataset.v;
   switch(a.dataset.act){
     case 'prev':M=addM(M,-1);render();break;
+    case 'thismonth':M=CM;render();break;
     case 'next':M=addM(M,1);render();break;
     case 'new':txForm(null,{type:tab==='gastos'&&gmode==='in'?'in':'out'});break;
     case 'newin':txForm(null,{type:'in',method:'pix'});break;
@@ -1900,7 +1964,8 @@ document.addEventListener('click',e=>{
     case 'help':helpSheet();break;
     case 'captest':{let ok=false;try{ok=AND.postTest()}catch(e){}toast(ok?'Notificação de teste enviada. Aguarde alguns segundos.':'Permita as notificações do app para testar.');break}
     case 'appsettings':try{AND.openAppSettings()}catch(e){}break;
-    case 'fbout':if(FB.user)FB.auth.signOut().then(()=>{S.cloudUser='';persistLocal();render();toast('Você saiu da conta')});break;
+    case 'cloudsetup':cloudSetupSheet();break;
+    case 'fbout':try{if(AND)AND.googleSignOut()}catch(e){}if(FB.user)FB.auth.signOut().then(()=>{S.cloudUser='';persistLocal();render();toast('Você saiu da conta')});break;
     case 'premium':paywall(v);break;
     case 'buy':try{AND.buy(v)}catch(e){toast('Google Play indisponível')}break;
     case 'restore':try{AND.restore();toast('Conferindo sua assinatura…')}catch(e){}break;
@@ -1926,6 +1991,7 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
   else if(id==='darkmode'){S.settings.theme=el.checked?'dark':'light';save();render()}
   else if(id==='autoimp'){if(el.checked&&!prem()){el.checked=false;paywall('auto');return}S.settings.autoImport=el.checked?'auto':'review';save();syncNative();toast(el.checked?'Anotação automática ligada':'Tudo passa pela revisão')}
   else if(id==='andalerts'){try{AND.setAlerts(el.checked)}catch(e){}}
+  else if(id==='appalerts'){S.settings.appAlerts=el.checked;save();if(el.checked)appNotify('Avisos ligados','Você vai ser avisado quando anotar, pagar ou passar de um limite.');toast(el.checked?'Avisos do app ligados':'Avisos do app desligados')}
   else if(id==='resded'){S.settings.reserveDeduct=el.checked;save();toast(el.checked?'Reservas descontadas do saldo':'Saldo sem descontar reservas')}
   else if(el.dataset&&el.dataset.ans){const x=ansList().find(h=>h.id===el.dataset.ans);if(x){x.on=el.checked;save()}}
   else if(id==='remtog'){S.settings.reminders=el.checked;save();render()}
@@ -1934,7 +2000,7 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
 });
 if(window.matchMedia)matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(S.settings.theme==='system')applyTheme()});
 
-load();if(!S.inbox)S.inbox=[];premInit();render();cloudInit();andPull();document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
+load();if(!S.inbox)S.inbox=[];premInit();render();cloudInit();andPull();setTimeout(dailyNotify,1500);document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 })();
 </script>

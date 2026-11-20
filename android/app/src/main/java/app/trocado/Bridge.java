@@ -49,6 +49,17 @@ final class Bridge {
     @JavascriptInterface
     public String pull() { return NotifStore.drain(act); }
 
+    /** Mostra um aviso do app na barra de notificações. */
+    @JavascriptInterface
+    public boolean notify(String title, String text) { return AppNotify.show(act, title, text); }
+
+    /** Entrar com Google (Credential Manager). A resposta chega em window.caixaGoogle. */
+    @JavascriptInterface
+    public void googleSignIn(String webClientId) { act.runOnUiThread(() -> GoogleAuth.signIn(act, webClientId, act.sink)); }
+
+    @JavascriptInterface
+    public void googleSignOut() { act.runOnUiThread(() -> GoogleAuth.signOut(act)); }
+
     /** Estado do serviço de leitura (JSON: connected, lastAny, lastBank). */
     @JavascriptInterface
     public String status() { return NotifStore.status(act); }

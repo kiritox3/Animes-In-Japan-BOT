@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
     private WebView web;
     private ValueCallback<Uri[]> fileCb;
     private Billing billing;
+    final Billing.Sink sink = code -> runOnUiThread(() -> { if (web != null) web.evaluateJavascript(code, null); });
 
     @Override
     protected void onCreate(Bundle state) {
@@ -109,7 +110,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        billing = new Billing(this, code -> runOnUiThread(() -> web.evaluateJavascript(code, null)));
+        billing = new Billing(this, sink);
         billing.start();
     }
 
