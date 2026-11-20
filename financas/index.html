@@ -777,7 +777,7 @@ function gOut(){
     <div class="trio"><button type="button" data-act="gstatus" data-v="paid" aria-pressed="${gstatus==='paid'}"><i style="color:var(--in)">${ic('check',14,3)}</i><b class="num">${fmt(o.paid)}</b><small>Pago</small></button>
     <button type="button" data-act="gstatus" data-v="open" aria-pressed="${gstatus==='open'}"><i style="color:#b88300">${ic('clock',14,2.6)}</i><b class="num">${fmt(o.open)}</b><small>A pagar</small></button>
     <button type="button" data-act="gmethod" data-v="${hl}" aria-pressed="${gmethod===hl}"><i style="color:var(--accent)">${ic(methodBy(hl).i,14,2.6)}</i><b class="num">${fmt(hlTotal)}</b><small>${hlLabel}</small></button></div></div>
-  <button type="button" class="act" data-act="import" style="width:100%;margin-top:12px;color:var(--accent-text)">${ic('bell',18)}Importar notificações do banco</button>
+  <div class="acts" style="margin-top:12px"><button type="button" class="act" data-act="stmt" style="color:var(--accent-text)">${ic('receipt',18)}Importar extrato</button><button type="button" class="act" data-act="import" style="color:var(--accent-text)">${ic('bell',18)}Colar notificações</button></div>
   ${searchRow('Buscar um gasto')}
   <div class="pills">${pill('all','Todas',cnt.all)}${pill('open','A pagar',cnt.open)}${pill('paid','Pagas',cnt.paid)}${pill('late','Atrasadas',cnt.late)}
    ${ms.length?'<span class="sep"></span>':''}${ms.map(m=>`<button type="button" class="pill" data-act="gmethod" data-v="${m.id}" aria-pressed="${gmethod===m.id}">${ic(m.i,16,2.2)}${m.l} <span>${m.n}</span></button>`).join('')}</div>
@@ -1088,7 +1088,7 @@ function importData(){openSheet(`<h3>Restaurar backup</h3><form class="form" id=
     <p class="hint">Isso substitui os dados atuais deste aparelho.</p><div class="btns"><button class="btn" type="submit">Restaurar</button></div></form>`,sh=>{
     const apply=txt=>{try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.tx))throw 0;S=o.v===2?o:migrate(o);load2();done('Backup restaurado')}catch(e){toast('Arquivo inválido. Use um backup do Trocado')}};
     sh.querySelector('#imf').onsubmit=e=>{e.preventDefault();const f=sh.querySelector('#im-file').files[0];if(f){const r=new FileReader();r.onload=()=>apply(r.result);r.readAsText(f)}else apply(sh.querySelector('#im-text').value)}})}
-function load2(){const d=defaults();if(S.demo)delete S.demo;S.settings=Object.assign(d.settings,S.settings||{});S.plan=Object.assign(d.plan,S.plan||{});if(!S.accounts||!S.accounts.length)S.accounts=d.accounts;if(!S.cats||!S.cats.length)S.cats=d.cats;S.cards=S.cards||[];S.paidInv=S.paidInv||{};
+function load2(){const d=defaults();if(S.demo)delete S.demo;if(!S.onboarded&&S.tx&&S.tx.length)S.onboarded=true;S.settings=Object.assign(d.settings,S.settings||{});S.plan=Object.assign(d.plan,S.plan||{});if(!S.accounts||!S.accounts.length)S.accounts=d.accounts;if(!S.cats||!S.cats.length)S.cats=d.cats;S.cards=S.cards||[];S.paidInv=S.paidInv||{};
   S.transfers=S.transfers||[];S.incomes=S.incomes||[];S.cards.forEach(c=>{if(!c.kind)c.kind='credito'});S.cats.forEach(c=>{if(!c.subs)c.subs=[]});if(!S.settings.user)S.settings.user={name:'',photo:''};
   HOME.forEach((h,i)=>{if(!S.settings.home.some(x=>x.id===h[0])){const o={id:h[0],on:true};if(i===0)S.settings.home.unshift(o);else S.settings.home.push(o)}})}
 function ensureIncomes(){let ch=false;for(const r of S.incomes){if(r.last===CM)continue;r.last=CM;ch=true;if(S.tx.some(t=>t.src===r.id&&ymOf(t.date)===CM))continue;
@@ -1187,7 +1187,7 @@ function extratoSheet(id){const a=accById(id);if(!a)return;const rows=[];
     rows.push({d:p.date,h:`<button type="button" class="row" data-act="invoice" data-card="${c.id}" data-k="${m}"><span class="bub" style="${cardBg(c)};color:${cardDark(c)?'#16151b':'#fff'}">${ic('card',20)}</span><span class="main"><span class="t">Fatura ${esc(c.name)}</span><span class="s">Pagamento · ${dNum(p.date)}</span></span><span class="num" style="font-weight:700">− ${fmt(invTotal(c.id,m))}</span></button>`})}
   rows.sort((x,y)=>x.d<y.d?1:-1);
   openSheet(`<h3>${esc(a.name)}</h3><div class="panel pad" style="margin-bottom:12px"><div class="lbl">Saldo atual</div><div class="big num" style="margin-top:6px">${fmt(accBalance(a))}</div></div>
-   <div class="btns" style="margin-bottom:14px"><button type="button" class="btn ghost" data-act="transfer" data-id="${id}">${ic('swap',18)}Transferir</button><button type="button" class="btn ghost" data-act="editacc" data-id="${id}">${ic('edit',18)}Editar</button></div>
+   <div class="btns" style="margin-bottom:14px"><button type="button" class="btn ghost" data-act="stmt" data-id="a:${id}">${ic('receipt',18)}Importar extrato</button><button type="button" class="btn ghost" data-act="transfer" data-id="${id}">${ic('swap',18)}Transferir</button><button type="button" class="btn ghost" data-act="editacc" data-id="${id}">${ic('edit',18)}Editar</button></div>
    <div class="panel list">${rows.length?rows.slice(0,60).map(r=>r.h).join(''):'<div class="empty">Nenhuma movimentação nesta conta.</div>'}</div>`)}
 function transferForm(tr,fromId){const editing=!!tr;if(S.accounts.length<2){toast('Você precisa de pelo menos duas contas');return}
   const d=tr||{from:fromId||S.accounts[0].id,to:(S.accounts.find(a=>a.id!==(fromId||S.accounts[0].id))||{}).id,amount:0,date:TODAY};const opts=S.accounts.map(a=>[a.id,a.name]);
@@ -1278,8 +1278,8 @@ function nRow(it,i){const cats=catsOf(it.type);const ms=METHODS.filter(m=>it.typ
    <div class="two"><div class="field"><label>Categoria</label><select data-n="catId">${cats.map(c=>`<option value="${c.id}" ${c.id===it.catId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
    <div class="field"><label>Forma</label><select data-n="method">${ms.map(m=>`<option value="${m.id}" ${m.id===it.method?'selected':''}>${m.l}</option>`).join('')}</select></div></div>
    ${it.method==='credito'?`<div class="field"><label>Cartão</label><select data-n="card">${CC().map(c=>`<option value="${c.id}" ${c.id===it.card?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`:`<div class="field"><label>Conta</label><select data-n="accountId">${S.accounts.map(a=>`<option value="${a.id}" ${a.id===it.accountId?'selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`}</div>`}
-function importSheet(prefill,inbox){let items=inbox?(S.inbox||[]).slice():[];
-  openSheet(inbox?`<h3>Revisar lançamentos capturados</h3><p class="hint" style="margin-bottom:12px">Confira o que o Trocado leu nas notificações. Os desmarcados serão descartados.</p><div id="n-out"></div>`:`<h3>Importar notificações do banco</h3>
+function importSheet(prefill,inbox,preset){let items=inbox?(S.inbox||[]).slice():preset?preset.items:[];
+  openSheet(preset?`<h3>${esc(preset.title)}</h3><p class="hint" style="margin-bottom:12px">${esc(preset.hint)}</p><div id="n-out"></div>`:inbox?`<h3>Revisar lançamentos capturados</h3><p class="hint" style="margin-bottom:12px">Confira o que o Trocado leu nas notificações. Os desmarcados serão descartados.</p><div id="n-out"></div>`:`<h3>Importar notificações do banco</h3>
    <p class="hint" style="margin-bottom:12px">Copie o texto das notificações (Nubank, PicPay, Mercado Pago, Inter e outros) e cole aqui. Pode colar várias de uma vez, separadas por linha em branco. O app lê valor, loja, cartão e data, e você confere antes de salvar.</p>
    <div class="form"><div class="field"><label for="n-text">Texto das notificações</label><textarea class="out" id="n-text" style="min-height:130px;font-family:var(--font-ui);font-size:14px" placeholder="Ex.: Compra de R$ 42,50 APROVADA em PADARIA BOM PAO para o cartão com final 4821.&#10;&#10;Você recebeu uma transferência de R$ 150,00 de Maria Souza.">${esc(prefill||'')}</textarea></div>
    <div class="btns"><button type="button" class="btn" id="n-read">${ic('search',20)}Ler notificações</button></div></div>
@@ -1287,10 +1287,10 @@ function importSheet(prefill,inbox){let items=inbox?(S.inbox||[]).slice():[];
     const draw=()=>{const sel=items.filter(x=>x.on).length;
       $('#n-out').innerHTML=items.length?`<div class="sec-h" style="margin-bottom:10px"><h2 style="font-size:17px">${items.length} encontrado${items.length>1?'s':''}</h2><span class="sub">${items.filter(x=>x.dup||x.low).length?items.filter(x=>x.dup||x.low).length+' para revisar':'Tudo certo'}</span></div>
         <div style="display:flex;flex-direction:column;gap:12px">${items.map(nRow).join('')}</div>
-        <div class="btns" style="margin-top:14px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><button type="button" class="btn" id="n-save" ${sel||inbox?'':'disabled'}>${ic('check',20,2.6)}${sel?'Adicionar '+sel+' lançamento'+(sel===1?'':'s'):'Descartar todos'}</button></div>`:(inbox?'<div class="empty">Nada para revisar.</div>':'')};
+        <div class="btns" style="margin-top:14px;position:sticky;bottom:0;background:var(--surface);padding-top:8px"><button type="button" class="btn" id="n-save" ${sel||inbox?'':'disabled'}>${ic('check',20,2.6)}${sel?'Adicionar '+sel+' lançamento'+(sel===1?'':'s'):(inbox?'Descartar todos':'Nada para adicionar')}</button></div>`:(inbox||preset?'<div class="empty">Nada para revisar.</div>':'')};
     const read=()=>{const raw=$('#n-text').value;const parts=nSplit(raw);items=parts.map(nParse).filter(Boolean);const bad=parts.length-items.length;draw();
       if(!parts.length)toast('Cole o texto de uma notificação');else if(!items.length)toast('Não achei nenhum valor em R$ no texto');else if(bad)toast(bad+' trecho'+(bad>1?'s':'')+' sem valor foi ignorado')};
-    if($('#n-read'))$('#n-read').onclick=read;if(prefill)read();if(inbox)draw();
+    if($('#n-read'))$('#n-read').onclick=read;if(prefill)read();if(inbox||preset)draw();
     sh.addEventListener('input',e=>{const el=e.target,box=el.closest('.nitem');if(!box)return;const it=items[+box.dataset.i],k=el.dataset.n;if(!k||k==='on')return;
       if(k==='amount'){const v=parseMoney(el.value);if(v>0)it.amount=v}else it[k]=el.value});
     sh.addEventListener('change',e=>{const el=e.target,box=el.closest('.nitem');if(!box)return;const it=items[+box.dataset.i];
@@ -1299,14 +1299,14 @@ function importSheet(prefill,inbox){let items=inbox?(S.inbox||[]).slice():[];
         if(it.type==='in'&&!IN_METHODS.includes(it.method))it.method='pix';const c=catsOf(it.type);it.catId=(c.find(x=>x.name==='Outros')||c[0]||{}).id||'';draw();return}
       const bk=e.target.closest('[data-block]');if(bk){const pkg=bk.dataset.block,it0=items.find(x=>x.pkg===pkg);S.settings.blockedApps=[...new Set([...(S.settings.blockedApps||[]),pkg])];S.settings.appNames=Object.assign(S.settings.appNames||{},{[pkg]:it0&&it0.app||pkg});
         items=items.filter(x=>x.pkg!==pkg);S.inbox=(S.inbox||[]).filter(x=>x.pkg!==pkg);save();draw();syncNative();toast('Não vou mais ler '+(it0&&it0.app||'esse app'));return}
-      if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);const LB=limitSnap();ok.forEach(addParsed);const n=ok.length;if(n){appNotify(`${n} lançamento${n>1?'s':''} adicionado${n>1?'s':''}`,'Vindos das notificações do banco.');limitCheck(LB)}
+      if(e.target.closest('#n-save')){const ok=items.filter(x=>x.on);const LB=limitSnap();ok.forEach(addParsed);const n=ok.length;if(n){appNotify(`${n} lançamento${n>1?'s':''} adicionado${n>1?'s':''}`,preset?'Vindos do extrato do banco.':'Vindos das notificações do banco.');limitCheck(LB)}
         if(inbox){const ids=new Set(items.map(x=>x.id));S.inbox=(S.inbox||[]).filter(x=>!ids.has(x.id))}
         done(n?n+' lançamento'+(n===1?'':'s')+' adicionado'+(n===1?'':'s'):'Descartados')}})})}
 /* ================= app Android: leitura automática das notificações ================= */
 const AND=(()=>{try{return window.CaixaAndroid||null}catch(e){return null}})();
 const APK_URL='https://github.com/kiritox3/Animes-In-Japan-BOT/releases/tag/caixa-android-latest';
 function addParsed(it){const cr=it.type==='out'&&it.method==='credito'&&cardById(it.card);
-  const base={id:uid(),type:it.type,amount:it.amount,desc:String(it.desc||'').trim(),catId:it.catId,sub:'',date:it.date||TODAY,time:it.time||'',method:it.method,note:it.app?'Capturado de '+it.app:'Importado de notificação',group:null,inst:null};
+  const base={id:uid(),type:it.type,amount:it.amount,desc:String(it.desc||'').trim(),catId:it.catId,sub:'',date:it.date||TODAY,time:it.time||'',method:it.method,note:it.note||(it.app?'Capturado de '+it.app:'Importado de notificação'),ext:it.ext||'',group:null,inst:null};
   if(cr){const c=cardById(it.card);S.tx.push({...base,card:c.id,inv:invOf(c,base.date),paid:true,accountId:''})}
   else S.tx.push({...base,method:it.method==='credito'?'debito':it.method,card:'',inv:'',paid:true,accountId:it.accountId||(S.accounts[0]||{}).id})}
 const ymdOf=ms=>{const d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
@@ -1346,13 +1346,13 @@ const PREM={on:false,products:null,msg:''};
 const FREE={accounts:2,cards:2,goals:1,budgets:3};
 // No app público (Android) os recursos Premium dependem da assinatura. No link pessoal fica tudo liberado.
 const prem=()=>!AND||PREM.on;
-function premInit(){if(!AND)return;try{PREM.on=!!AND.isPremium()}catch(e){}syncNative()}
+function premInit(){if(!AND)return;try{PREM.on=!!AND.isPremium()}catch(e){}syncNative();syncPush()}
 function syncNative(){if(!AND)return;try{AND.setAuto(S.settings.autoImport==='auto'&&prem())}catch(e){}try{AND.setBlocked(JSON.stringify(S.settings.blockedApps||[]))}catch(e){}}
 window.caixaBilling=json=>{let d={};try{d=JSON.parse(json)}catch(e){return}
   if(d.products){PREM.products=d.products;PREM.msg='';drawPlans()}
   if(d.status==='unavailable'){PREM.msg=d.message||'Google Play indisponível';drawPlans()}
   if('premium' in d){const was=PREM.on;PREM.on=!!d.premium;syncNative();
-    if(PREM.on&&!was){if(FB.user)fbAttach();closeSheet();render();toast('Premium ativado. Obrigado!')}
+    syncPush();if(PREM.on&&!was){if(FB.user)fbAttach();closeSheet();render();toast('Premium ativado. Obrigado!')}
     else if(!PREM.on&&was){if(FB.user)fbAttach();render()}}
   if(d.status==='canceled')toast('Compra cancelada');
   else if(d.status==='pending')toast('Pagamento pendente. O Premium ativa quando for aprovado.');
@@ -1705,7 +1705,7 @@ const shortId=()=>{const s=String(CLOUD.id||DEVICE);let h=0;for(let i=0;i<s.leng
 const ISSUES_URL='https://github.com/kiritox3/Animes-In-Japan-BOT/issues/new';
 function captureCard(){if(!AND)return `<section><p class="grp">Registro automático</p><div class="panel cfg">${crow('phone','#4ADE95','App para Android','Lê as notificações do banco e anota sozinho','data-act="getapk"')}</div></section>`;
   let ok=false,stt={};try{ok=AND.hasAccess()}catch(e){}try{stt=JSON.parse(AND.status()||'{}')}catch(e){}let al=true;try{al=AND.alertsOn()}catch(e){}
-  const tm=ms=>ms?new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(' ',', '):'ainda não';
+  const tm=ms=>ms?dNum(ymdOf(ms))+', '+new Date(ms).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'ainda não';
   const hm=ms=>ms?new Date(ms).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';const bl=S.settings.blockedApps||[];
   return `<section><p class="grp">Registro automático</p><div class="panel pad" style="display:flex;flex-direction:column;gap:12px">
    <div class="sec-h"><div style="display:flex;gap:12px;align-items:center"><span class="cico" style="background:var(--accent-soft);color:var(--accent-text)">${ic('bolt',22)}</span><h2 style="font-size:19px">Captura automática</h2></div><span class="st ${ok?'ok':'wait'}">${ok?'Ativa':'Desligada'}</span></div>
@@ -1741,6 +1741,7 @@ function vConfig(){const st=S.settings,u=st.user||{};
     ${crow('tag','#FF6FA5','Categorias','Nome, ícone, emoji ou foto','data-act="catsheet"')}
     ${crow('branch','#38D6C4','Subcategorias','Detalhe seus gastos e entradas','data-act="subsheet"')}
     ${crow('cal','#7C8CFF','Planejamento',`${S.plan.limit?'Limite de '+fmt(S.plan.limit)+'/mês · ':''}${S.plan.goals.length} reserva${S.plan.goals.length===1?'':'s'}`,'data-act="plan"')}
+    ${crow('receipt','#4ADE95','Importar extrato do banco','Arquivo OFX ou CSV, com revisão antes de salvar','data-act="stmt"')}
     ${crow('bell','#F5C451','Importar notificações','Cole o texto e vira lançamento','data-act="import"')}
   </div></section>
   <section><div class="panel cfg">
@@ -1751,12 +1752,14 @@ function vConfig(){const st=S.settings,u=st.user||{};
     ${crow('bars','#4ADE95','Análises','Escolha e ordene os gráficos','data-act="anscfg"')}
     ${crow('wallet','#38D6C4','Descontar reservas do saldo','Mostra o saldo sem o dinheiro guardado nas metas','',`<input type="checkbox" class="toggle" id="resded" ${st.reserveDeduct?'checked':''} aria-label="Descontar reservas do saldo">`)}
     ${crow('eye','#9D9CAA','Esconder valores','Mostra ••••• no lugar dos números','',`<input type="checkbox" class="toggle" id="hidevals" ${st.hide?'checked':''} aria-label="Esconder valores">`)}
+    ${pushOn()?crow('sparkle','#D77DFF','Novidades e dicas',`Mensagens do ${APP_NAME} sobre recursos novos e dicas`,'',`<input type="checkbox" class="toggle" id="newstog" ${st.news!==false?'checked':''} aria-label="Novidades e dicas">`):''}
     ${AND?crow('bell','#F5C451','Avisos do app','Notificação quando você anota, paga uma fatura, guarda dinheiro ou passa de um limite','',`<input type="checkbox" class="toggle" id="appalerts" ${st.appAlerts!==false?'checked':''} aria-label="Avisos do app">`):''}
     ${crow('clock','#7C8CFF','Lembretes','Fatura e contas vencendo, limite de categoria e confirmação do salário','',`<input type="checkbox" class="toggle" id="remtog" ${st.reminders?'checked':''} aria-label="Lembretes">`)}
     <div class="cfgrow"><span class="cico" style="background:color-mix(in srgb,#4ADE95 18%,transparent);color:#4ADE95">${ic('bolt',22)}</span><span class="n"><b>Destaque em Gastos</b><small>Terceiro número do topo</small></span><select id="hl" style="border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:9px;max-width:130px">${HIGHLIGHTS.map(([k,l])=>`<option value="${k}" ${st.highlight===k?'selected':''}>${l}</option>`).join('')}</select></div>
   </div></section>
   <section><p class="grp">Conte com a gente</p><div class="panel cfg">
     ${crow('question','#4ADE95','Ajuda e perguntas','Como usar cada parte do app','data-act="help"')}
+    ${crow('sparkle','#9B7BFF','Rever as boas-vindas','Configurar conta principal e cartão de novo','data-act="onboard"')}
     <a class="cfgrow" href="${ISSUES_URL}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><span class="cico" style="background:color-mix(in srgb,#F5C451 18%,transparent);color:#F5C451">${ic('bulb',22)}</span><span class="n"><b>Sugerir uma melhoria</b><small>Sua ideia pode fazer parte do app</small></span>${ic('right',18)}</a>
     ${crow('lock','#9D9CAA','Política de privacidade','Como seus dados são usados','data-act="privacy"')}
   </div></section>
@@ -1818,6 +1821,94 @@ async function googleLogin(){const conf=fbConf();if(!conf||!FB.ready){toast('Con
 window.caixaGoogle=json=>{let d;try{d=JSON.parse(json)}catch(e){return}
   if(d.status!=='ok'){toast({canceled:'Login cancelado',no_account:'Nenhuma conta Google no celular. Adicione uma em Configurações > Contas.',missing_client:'Falta o ID do cliente Web na configuração da nuvem',failed:'Não deu para entrar com Google. Confira o SHA-1 e o ID do cliente Web no Firebase.'}[d.code]||'Não deu para entrar com Google');return}
   FB.auth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(d.idToken)).then(()=>{closeSheet();toast('Você entrou com '+(d.email||'Google'));appNotify('Nuvem conectada','Seus dados vão ser salvos na conta '+(d.email||'Google')+'.')},e=>toast(fbErr(e)))};
+/* ================= v5: importar extrato (OFX/CSV), boas-vindas, novidades ================= */
+const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+function numBR(s){s=String(s||'').trim();if(!s)return NaN;let neg=/^-|^\(.*\)$|-$/.test(s)||/\bD$/i.test(s);s=s.replace(/[^\d.,]/g,'');if(!s)return NaN;
+  const lc=s.lastIndexOf(','),ld=s.lastIndexOf('.');if(lc>ld)s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');const v=parseFloat(s);return isNaN(v)?NaN:(neg?-v:v)}
+function dateAny(s){s=String(s||'').trim();let m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s);if(m)return m[1]+'-'+m[2]+'-'+m[3];
+  m=/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/.exec(s);if(m){const y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+pad(m[2])+'-'+pad(m[1])}
+  m=/^(\d{4})(\d{2})(\d{2})/.exec(s);if(m)return m[1]+'-'+m[2]+'-'+m[3];return''}
+function splitCSV(line,d){const out=[];let cur='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(q){if(ch==='"'){if(line[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}else if(ch==='"')q=true;else if(ch===d){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out.map(x=>x.trim())}
+/** Extrato OFX (formato padrão dos bancos). Valor negativo = saída. */
+function parseOFX(t){const rows=[];const blocks=t.split(/<STMTTRN>/i).slice(1);
+  for(const b0 of blocks){const b=b0.split(/<\/STMTTRN>/i)[0];const g=k=>{const m=new RegExp('<'+k+'>([^<\\r\\n]*)','i').exec(b);return m?m[1].trim():''};
+    const v=numBR(g('TRNAMT')),date=dateAny(g('DTPOSTED'));if(isNaN(v)||!date)continue;rows.push({date,value:v,desc:g('MEMO')||g('NAME')||g('PAYEE')||'',ext:g('FITID')})}
+  return{rows,card:/<CREDITCARDMSGSRSV1>|<CCSTMTRS>/i.test(t),fmt:'OFX'}}
+/** Extrato CSV: acha o cabeçalho e as colunas de data, valor e descrição. */
+function parseCSVStmt(t){const lines=t.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());if(lines.length<2)return null;let hi=-1,d=';',H=[];
+  for(let i=0;i<Math.min(20,lines.length);i++){const l=nrm(lines[i]);const dl=[';',',','\t'].sort((a,b)=>l.split(b).length-l.split(a).length)[0];const cols=splitCSV(l,dl);
+    if(cols.some(c=>/^(data|date|dt)\b/.test(c))&&cols.some(c=>/(valor|amount|quantia|montante|credito|debito|entrada|saida)/.test(c))){hi=i;d=dl;H=cols;break}}
+  if(hi<0)return null;const idx=re=>H.findIndex(c=>re.test(c));
+  const iD=idx(/^(data|date|dt)\b/),iV=idx(/^(valor|amount|quantia|montante)/),iC=idx(/^(credito|entrada)/),iB=idx(/^(debito|saida)/),iT=idx(/(descri|title|titulo|hist|memo|estabelecimento|lancamento|detalhe|^nome)/),iI=idx(/(identificador|^id$|fitid|documento)/);
+  const rows=[];for(const line of lines.slice(hi+1,hi+2001)){const c=splitCSV(line,d);const date=dateAny(c[iD]);if(!date)continue;
+    let v=iV>=0?numBR(c[iV]):((iC>=0?Math.abs(numBR(c[iC]))||0:0)-(iB>=0?Math.abs(numBR(c[iB]))||0:0));if(isNaN(v)||!v)continue;
+    rows.push({date,value:v,desc:iT>=0?c[iT]:'',ext:iI>=0?c[iI]:''})}
+  return{rows,card:false,fmt:'CSV'}}
+const PAY_RE=/(pagamento (de |da )?fatura|pgto\.? fatura|fatura do cart|pagamento recebido|pagto cartao)/i;
+/** Transforma as linhas do extrato em itens para revisar antes de salvar. */
+function stmtItems(res,target){const card=target.startsWith('k:')?cardById(target.slice(2)):null,acc=target.startsWith('a:')?accById(target.slice(2)):null;
+  let rows=res.rows;if(card&&res.fmt==='CSV'){const pos=rows.filter(r=>r.value>0).length;if(pos>rows.length/2)rows=rows.map(r=>({...r,value:-r.value}))}
+  const exts=new Set(S.tx.map(t=>t.ext).filter(Boolean));
+  return rows.map(r=>{const type=r.value<0?'out':'in',amount=Math.round(Math.abs(r.value)*100),raw=String(r.desc||'').replace(/\s+/g,' ').trim();
+    let desc=raw.replace(/^(compra no debito|compra no d[eé]bito|pix enviado|pix recebido|transferencia enviada|transferencia recebida|transfer[eê]ncia (enviada|recebida)( pelo pix)?)\s*[-:]?\s*/i,'').replace(/\s*-\s*(•|\*)+.*$/,'').slice(0,48)||raw.slice(0,48)||(type==='in'?'Entrada':'Gasto');
+    if(desc===desc.toUpperCase())desc=desc.toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());
+    let method=card?'credito':/\bpix\b/i.test(raw)?'pix':/boleto/i.test(raw)?'boleto':/d[eé]bito|compra/i.test(raw)?'debito':/transf|ted|doc/i.test(raw)?'transf':'pix';
+    let on=true,why='';if(card&&type==='in'){on=false;why='Pagamento ou estorno do cartão'}if(!card&&PAY_RE.test(raw)){on=false;why='Pagamento de fatura (as compras já contam no cartão)'}
+    const prev=S.tx.slice().reverse().find(x=>x.type===type&&x.desc&&nrm(x.desc)===nrm(desc));let catId=prev?prev.catId:'';
+    if(!catId){const cs=catsOf(type);const hit=type==='out'?(CAT_WORDS.find(([,re])=>re.test(desc+' '+raw))||[])[0]:/sal[aá]rio|folha|pagto sal/i.test(raw)?'Salário':null;catId=((hit&&cs.find(c=>c.name===hit))||cs.find(c=>c.name==='Outros')||cs[0]||{}).id||''}
+    const dup=(r.ext&&exts.has(r.ext))||S.tx.some(x=>x.type===type&&x.amount===amount&&x.date===r.date&&nrm(x.desc)===nrm(desc));
+    if(dup){on=false;why='Já existe no app'}
+    return{id:uid(),type,amount,desc,date:r.date,method:card&&type==='out'?'credito':(type==='in'&&!IN_METHODS.includes(method)?'pix':method),card:card?card.id:'',accountId:acc?acc.id:(card?card.accountId:''),catId,on,dup,low:!raw,src:`${dNum(r.date)} · ${raw||'sem descrição'}${why?' · '+why:''}`,note:'Importado do extrato',ext:r.ext||''}})}
+function stmtSheet(pre){const opts=[...S.accounts.map(a=>['a:'+a.id,'Conta '+a.name]),...CC().map(c=>['k:'+c.id,'Cartão de crédito '+c.name])];
+  openSheet(`<h3>Importar extrato do banco</h3><p class="hint" style="margin-bottom:12px">No app ou site do seu banco, procure "Exportar extrato" e salve em <b>OFX</b> (melhor) ou <b>CSV</b>. A maioria dos bancos oferece pelo menos um desses formatos. Você confere tudo antes de salvar, e o que já está no app é deixado de fora.</p>
+   <form class="form" id="stf" novalidate><div class="field"><label for="st-file">Arquivo do extrato</label><input id="st-file" type="file" accept=".ofx,.qfx,.csv,.txt,text/csv,application/x-ofx"></div>
+   <div class="field"><label for="st-to">Este extrato é de</label>${sel('st-to',opts,pre||opts[0][0])}</div><p class="hint" id="st-msg" style="color:var(--out)"></p>
+   <div class="btns"><button class="btn" type="submit">${ic('search',20)}Ler extrato</button></div></form>`,sh=>{const q=s=>sh.querySelector(s);
+    q('#stf').onsubmit=e=>{e.preventDefault();const f=q('#st-file').files[0];if(!f){q('#st-msg').textContent='Escolha o arquivo do extrato.';return}
+      const go=txt=>{const res=/<OFX>|<STMTTRN>/i.test(txt)?parseOFX(txt):parseCSVStmt(txt);
+        if(!res||!res.rows.length){q('#st-msg').textContent='Não reconheci lançamentos nesse arquivo. Tente o formato OFX.';return}
+        let target=q('#st-to').value;if(res.card&&target.startsWith('a:')&&CC().length)target='k:'+CC()[0].id;
+        const items=stmtItems(res,target);const novos=items.filter(x=>x.on).length;
+        importSheet(null,false,{title:'Revisar extrato',hint:`${items.length} lançamento${items.length>1?'s':''} lido${items.length>1?'s':''} (${res.fmt}), ${novos} novo${novos===1?'':'s'}. Os desmarcados não serão salvos.`,items})};
+      const rd=new FileReader();rd.onload=()=>{const t=String(rd.result);if(/�/.test(t)){const r2=new FileReader();r2.onload=()=>go(String(r2.result));r2.readAsText(f,'windows-1252')}else go(t)};rd.onerror=()=>{q('#st-msg').textContent='Não consegui abrir o arquivo.'};rd.readAsText(f,'utf-8')}})}
+
+/* ---------- boas-vindas na primeira abertura ---------- */
+function onboarding(step){step=step||1;const st=S.settings;const fin=()=>{S.onboarded=true;save();closeSheet();render()};
+  if(step===1)openSheet(`<div style="text-align:center;margin:6px 0 14px">${logoMark(64)}<h3 style="margin:12px 0 4px;font-size:24px">Bem-vindo ao ${APP_NAME}</h3><p class="hint">Seu dinheiro organizado, do jeito que você fala.</p></div>
+    <div class="pwlist">${[['bolt','Gastos anotados sozinhos','O app lê as notificações do banco e anota compras, Pix e transferências.'],['card','Cartões e faturas','Parcelas na fatura certa, limite disponível e vencimentos.'],['bars','Para onde vai o dinheiro','Resumo do mês, limites por categoria e quanto dá para gastar por dia.']].map(([i,t,d])=>`<div class="pwf"><span class="cico" style="background:var(--accent-soft);color:var(--accent-text)">${ic(i,20)}</span><div><b>${t}</b><small>${d}</small></div></div>`).join('')}</div>
+    <form class="form" id="ob1"><div class="field"><label for="ob-name">Como podemos te chamar?</label><input id="ob-name" value="${esc((st.user||{}).name||'')}" placeholder="Seu nome" autocomplete="given-name"></div><div class="btns"><button class="btn" type="submit">Começar</button></div></form>`,sh=>{
+      sh.querySelector('#ob1').onsubmit=e=>{e.preventDefault();st.user=Object.assign(st.user||{},{name:sh.querySelector('#ob-name').value.trim()});save();onboarding(2)}});
+  if(step===2){const a=S.accounts[0];let bank=a&&a.bank||'';
+    openSheet(`<p class="lbl">Passo 1 de 2</p><h3>Sua conta principal</h3><p class="hint" style="margin-bottom:12px">Onde você recebe e paga a maior parte das coisas.</p>
+     <form class="form" id="ob2"><div class="field"><span class="lb">Banco</span>${bankChips(bank)}</div>
+     <div class="field"><label for="ob-bal">Saldo atual</label><input id="ob-bal" inputmode="decimal" placeholder="0,00" value="${a&&accBalance(a)?toInput(accBalance(a)):''}"><p class="hint">O valor que aparece no app do banco hoje.</p></div>
+     <div class="btns"><button class="btn" type="submit">Continuar</button></div><p style="text-align:center"><button type="button" class="link" id="ob-skip" style="margin:0 auto">Pular</button></p></form>`,sh=>{
+      sh.querySelectorAll('[data-bank]').forEach(b=>b.onclick=()=>{bank=b.dataset.bank;pressGroup(sh,'[data-bank]',b)});
+      sh.querySelector('#ob-skip').onclick=()=>onboarding(3);
+      sh.querySelector('#ob2').onsubmit=e=>{e.preventDefault();const k=bankBy(bank);let bal=parseMoney(sh.querySelector('#ob-bal').value);if(isNaN(bal))bal=0;
+        if(a){if(k&&k[0]!=='outro'){a.name=k[1];a.bank=k[0];a.color=k[3]}a.initial=(a.initial||0)+(bal-accBalance(a))}else S.accounts.push({id:'a_'+uid(),name:k&&k[0]!=='outro'?k[1]:'Conta principal',bank:k?k[0]:'',kind:'corrente',initial:bal,color:k?k[3]:'#9B7BFF',include:true});
+        save();onboarding(3)}})}
+  if(step===3){let bank='';
+    openSheet(`<p class="lbl">Passo 2 de 2</p><h3>Tem cartão de crédito?</h3><p class="hint" style="margin-bottom:12px">Com os dias de fechamento e vencimento, as compras caem na fatura certa.</p>
+     <form class="form" id="ob3"><div class="field"><span class="lb">Banco do cartão</span>${bankChips('')}</div>
+     <div class="two"><div class="field"><label for="ob-close">Fecha dia</label><input id="ob-close" type="number" min="1" max="31" inputmode="numeric" placeholder="Ex.: 3"></div><div class="field"><label for="ob-due">Vence dia</label><input id="ob-due" type="number" min="1" max="31" inputmode="numeric" placeholder="Ex.: 10"></div></div>
+     <div class="field"><label for="ob-lim">Limite</label><input id="ob-lim" inputmode="decimal" placeholder="0,00"></div>
+     <div class="btns"><button class="btn" type="submit">Adicionar cartão</button></div><p style="text-align:center"><button type="button" class="link" id="ob-skip" style="margin:0 auto">Não tenho ou adiciono depois</button></p></form>`,sh=>{
+      sh.querySelectorAll('[data-bank]').forEach(b=>b.onclick=()=>{bank=b.dataset.bank;pressGroup(sh,'[data-bank]',b)});
+      sh.querySelector('#ob-skip').onclick=()=>onboarding(4);
+      sh.querySelector('#ob3').onsubmit=e=>{e.preventDefault();const day=v=>Math.max(1,Math.min(31,parseInt(v)||0));const cl=day(sh.querySelector('#ob-close').value),du=day(sh.querySelector('#ob-due').value);
+        if(!bank||!parseInt(sh.querySelector('#ob-close').value)||!parseInt(sh.querySelector('#ob-due').value)){toast('Escolha o banco e os dias de fechamento e vencimento');return}
+        const k=bankBy(bank);S.cards.push({id:'k_'+uid(),kind:'credito',bank,name:k[0]==='outro'?'Meu cartão':k[1],last4:'',limit:Math.max(0,parseMoney(sh.querySelector('#ob-lim').value)||0),close:cl,due:du,color:k[3],color2:k[4],accountId:(S.accounts[0]||{}).id||''});save();onboarding(4)}})}
+  if(step===4)openSheet(`<div style="text-align:center;margin:6px 0 14px"><span class="cico" style="width:64px;height:64px;border-radius:50%;margin:0 auto;background:color-mix(in srgb,var(--in) 18%,transparent);color:var(--in)">${ic('check',32,2.6)}</span><h3 style="margin:12px 0 4px">Tudo pronto${(st.user||{}).name?', '+esc(st.user.name):''}!</h3><p class="hint">Escolha como quer começar:</p></div>
+    <div class="form">${AND?`<button type="button" class="btn" id="ob-auto">${ic('bolt',20)}Anotar gastos sozinho (notificações)</button>`:''}
+    <button type="button" class="btn ghost" id="ob-stmt">${ic('receipt',20)}Importar extrato do banco</button>
+    ${fbAvailable()?`<button type="button" class="btn ghost" id="ob-cloud">${ic('cloud',20)}Entrar com Google (backup)</button>`:''}
+    <button type="button" class="btn ghost" id="ob-done">Começar a usar</button></div>`,sh=>{const q=s=>sh.querySelector(s);S.onboarded=true;save();
+    if(q('#ob-auto'))q('#ob-auto').onclick=()=>{render();accessSheet()};q('#ob-stmt').onclick=()=>{render();stmtSheet()};
+    if(q('#ob-cloud'))q('#ob-cloud').onclick=()=>{render();fbSheet()};q('#ob-done').onclick=fin})}
+/* ---------- novidades do dono do app (Firebase Cloud Messaging) ---------- */
+const pushOn=()=>{try{return !!(AND&&AND.pushAvailable())}catch(e){return false}};
+function syncPush(){if(!pushOn())return;try{AND.setPushTopics(S.settings.news!==false,!!PREM.on)}catch(e){}}
 /* ================= nuvem (conta do Claude / email) ================= */
 const CLOUD={st:'conn',code:'',id:null,email:'',name:'',col:null,ready:false,pushing:false,dirty:false,hashes:{},timer:null,to:null,last:0,pending:null};
 const DEVICE=(()=>{try{let d=localStorage.getItem('caixa.device');if(!d){d=uid();localStorage.setItem('caixa.device',d)}return d}catch(e){return 'd'+uid()}})();
@@ -1973,6 +2064,8 @@ document.addEventListener('click',e=>{
     case 'privacy':privacySheet();break;
     case 'csv':exportCSV();break;
     case 'import':importSheet();break;
+    case 'stmt':stmtSheet(a.dataset.id);break;
+    case 'onboard':onboarding(1);break;
     case 'inbox':importSheet(null,true);break;
     case 'getapk':apkSheet();break;
     case 'andaccess':accessSheet();break;
@@ -1991,6 +2084,7 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
   else if(id==='darkmode'){S.settings.theme=el.checked?'dark':'light';save();render()}
   else if(id==='autoimp'){if(el.checked&&!prem()){el.checked=false;paywall('auto');return}S.settings.autoImport=el.checked?'auto':'review';save();syncNative();toast(el.checked?'Anotação automática ligada':'Tudo passa pela revisão')}
   else if(id==='andalerts'){try{AND.setAlerts(el.checked)}catch(e){}}
+  else if(id==='newstog'){S.settings.news=el.checked;save();syncPush();toast(el.checked?'Você vai receber novidades':'Novidades desligadas')}
   else if(id==='appalerts'){S.settings.appAlerts=el.checked;save();if(el.checked)appNotify('Avisos ligados','Você vai ser avisado quando anotar, pagar ou passar de um limite.');toast(el.checked?'Avisos do app ligados':'Avisos do app desligados')}
   else if(id==='resded'){S.settings.reserveDeduct=el.checked;save();toast(el.checked?'Reservas descontadas do saldo':'Saldo sem descontar reservas')}
   else if(el.dataset&&el.dataset.ans){const x=ansList().find(h=>h.id===el.dataset.ans);if(x){x.on=el.checked;save()}}
@@ -2000,7 +2094,7 @@ document.addEventListener('change',e=>{const el=e.target,id=el.id;
 });
 if(window.matchMedia)matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(S.settings.theme==='system')applyTheme()});
 
-load();if(!S.inbox)S.inbox=[];premInit();render();cloudInit();andPull();setTimeout(dailyNotify,1500);document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
+load();if(!S.inbox)S.inbox=[];premInit();render();cloudInit();andPull();setTimeout(dailyNotify,1500);if(!S.onboarded)setTimeout(()=>{if(!S.onboarded&&!scrim)onboarding(1)},400);document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 })();
 </script>

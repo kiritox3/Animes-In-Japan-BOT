@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+// Firebase (notificações para os usuários): ativo quando existe app/google-services.json.
+// Baixe o arquivo no Console do Firebase > Configurações do projeto > app Android (pacote app.trocado).
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+
 // O app Android usa a mesma página do Caixa (financas/index.html), copiada para os assets no build.
 def webOut = layout.buildDirectory.dir("generated/web")
 tasks.register('copyWeb', Copy) {
@@ -70,6 +76,8 @@ tasks.named('preBuild') { dependsOn 'copyWeb' }
 dependencies {
     implementation 'androidx.webkit:webkit:1.14.0'
     implementation 'com.android.billingclient:billing:8.3.0'
+    implementation platform('com.google.firebase:firebase-bom:35.2.0')
+    implementation 'com.google.firebase:firebase-messaging'
     implementation 'androidx.credentials:credentials:1.5.0'
     implementation 'androidx.credentials:credentials-play-services-auth:1.5.0'
     implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'

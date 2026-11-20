@@ -49,6 +49,13 @@ final class Bridge {
     @JavascriptInterface
     public String pull() { return NotifStore.drain(act); }
 
+    /** Notificações do dono do app (Firebase). Devolve false quando o projeto não tem Firebase. */
+    @JavascriptInterface
+    public boolean pushAvailable() { return PushService.available(act); }
+
+    @JavascriptInterface
+    public void setPushTopics(boolean news, boolean premium) { PushService.setTopics(act, news, premium); }
+
     /** Mostra um aviso do app na barra de notificações. */
     @JavascriptInterface
     public boolean notify(String title, String text) { return AppNotify.show(act, title, text); }

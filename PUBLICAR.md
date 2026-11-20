@@ -29,6 +29,22 @@ O identificador do pacote (`app.trocado`, em `android/app/build.gradle`) é perm
 
 Os valores do `firebaseConfig` não são senhas: quem protege os dados são as regras do passo 4. O login com Google no Android usa o Credential Manager (a tela do Google não abre dentro do app); por isso o SHA-1 do passo 5 é obrigatório.
 
+9. **Notificações para os usuários:** no app Android do passo 5, baixe o `google-services.json` e coloque em `android/app/google-services.json`. O build liga o Firebase sozinho quando o arquivo existe. Ele não é secreto e pode ir para o repositório.
+
+## 2.1 Mandar notificações para os usuários (você)
+
+Com o `google-services.json` no projeto, cada app instalado entra em grupos (tópicos):
+
+| Tópico | Quem recebe |
+|---|---|
+| `todos` | Todo mundo que deixou "Novidades e dicas" ligado em Config |
+| `gratis` | Quem usa a versão grátis |
+| `premium` | Assinantes |
+
+Para mandar: Console do Firebase → **Messaging** → **Nova campanha** → **Notificações**. Escreva título e texto e, em "Segmentação", escolha **Tópico** e digite `todos`, `gratis` ou `premium`. Dá para agendar. Não precisa de servidor.
+
+O usuário pode desligar em Config → Novidades e dicas. Use com moderação: notificação demais faz as pessoas desinstalarem.
+
 ## 3. Conta de desenvolvedor Google Play (você)
 
 1. Crie em https://play.google.com/console (taxa única de US$ 25).
@@ -69,6 +85,17 @@ O arquivo `android/app/caixa.jks` é uma chave de **teste** e está público no 
 - **Acesso a notificações**: o app mostra uma explicação antes de pedir o acesso (exigência da loja). Na ficha, explique que a leitura serve para anotar gastos automaticamente.
 - **Classificação de conteúdo**, **público-alvo** (maiores de 18 recomendado para finanças) e **app de finanças**: preencha os questionários. Apps de finanças pessoais (só controle de gastos) não precisam das licenças de instituição financeira, mas declare que o app não oferece empréstimos.
 
+## 6.1 Ficha da loja (pronta)
+
+A pasta `loja/` tem o material da ficha:
+
+- `loja/ficha.md`: nome, descrição curta, descrição completa e notas para os formulários
+- `loja/icone-512.png`: ícone da ficha (512 x 512)
+- `loja/destaque-1024x500.png`: imagem de destaque
+- `loja/telas/`: 6 capturas de tela de celular (1080 x 1920) com legenda
+
+As telas usam dados de exemplo e cartões sem marca de banco, para evitar problemas de marca registrada na revisão do Google.
+
 ## 7. Por que o Play Protect bloqueou o APK
 
 Fora da loja, o Android bloqueia apps que pedem acesso às notificações quando instalados pelo navegador. Isso deixa de acontecer quando o app é instalado pela Play Store. Para testar antes disso, use o teste interno (passo 5) ou instale por cabo com `adb install Trocado.apk`.
@@ -83,6 +110,7 @@ Fora da loja, o Android bloqueia apps que pedem acesso às notificações quando
 | 1 meta e 3 limites por categoria | Metas e limites ilimitados |
 | Backup manual em arquivo | Backup na nuvem com sincronização entre celulares |
 | Cores prontas | Qualquer cor + exportar planilha CSV |
+| Importar extrato OFX/CSV, colar notificações | (igual) |
 
 Os limites ficam em `FREE` e as vantagens em `PREM_FEATURES`, no `financas/index.html`.
 
