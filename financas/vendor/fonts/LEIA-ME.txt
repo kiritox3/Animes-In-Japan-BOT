@@ -1,0 +1,2 @@
+Manrope e Space Grotesk (Google Fonts), licença SIL Open Font License 1.1: https://openfontlicense.org
+Arquivos woff2 (latin e latin-ext) incluídos no app para funcionar offline e sem chamar servidores externos.

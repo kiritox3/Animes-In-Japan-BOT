@@ -128,6 +128,9 @@ final class Bridge {
     /** Salva um arquivo na pasta Downloads. Devolve onde salvou, ou "" se falhou. */
     @JavascriptInterface
     public String saveFile(String name, String content, String mime) {
+        name = name == null ? "arquivo.txt" : name.replaceAll("[^\\w.-]", "_").replaceAll("\\.{2,}", ".");
+        if (name.isEmpty() || name.startsWith(".")) name = "arquivo" + name;
+        if (mime == null || !mime.matches("[\\w.+-]+/[\\w.+-]+")) mime = "application/octet-stream";
         byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
         String type = mime == null || mime.isEmpty() ? "application/octet-stream" : mime;
         try {

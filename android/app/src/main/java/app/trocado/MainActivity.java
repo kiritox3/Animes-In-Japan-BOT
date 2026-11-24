@@ -59,7 +59,8 @@ public class MainActivity extends Activity {
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
         s.setAllowFileAccess(false);
-        s.setAllowContentAccess(true);
+        s.setAllowContentAccess(false);
+        s.setGeolocationEnabled(false);
         s.setMediaPlaybackRequiresUserGesture(true);
 
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
@@ -69,7 +70,11 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
-                return loader.shouldInterceptRequest(r.getUrl());
+                Uri u = r.getUrl();
+                if (HOST.equals(u.getHost())) return loader.shouldInterceptRequest(u);
+                if (allowedRemote(u)) return null;
+                // Qualquer outro endereço é bloqueado: a página só fala com o app e com o Firebase.
+                return new WebResourceResponse("text/plain", "utf-8", 403, "Bloqueado", null, new java.io.ByteArrayInputStream(new byte[0]));
             }
 
             @Override
@@ -112,6 +117,13 @@ public class MainActivity extends Activity {
 
         billing = new Billing(this, sink);
         billing.start();
+    }
+
+    /** Servidores que a página pode acessar: só os do Google/Firebase, sempre com HTTPS. */
+    static boolean allowedRemote(Uri u) {
+        String host = u.getHost();
+        if (host == null || !"https".equals(u.getScheme())) return false;
+        return host.endsWith(".googleapis.com");
     }
 
     void billingLoad() { billing.loadProducts(); }

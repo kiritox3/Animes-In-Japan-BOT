@@ -8,10 +8,15 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com; frame-src https://*.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self'; manifest-src 'self'">
+<meta name="referrer" content="no-referrer">
 <style>
+/* fontes incluídas no app (vendor/fonts) */
+@font-face{font-family:'Manrope';font-style:normal;font-weight:400 800;font-display:swap;src:url(vendor/fonts/manrope-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:400 800;font-display:swap;src:url(vendor/fonts/manrope-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500 700;font-display:swap;src:url(vendor/fonts/spacegrotesk-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500 700;font-display:swap;src:url(vendor/fonts/spacegrotesk-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+
 /* Layout: coluna única de até 560px, escuro por padrão. Cabeçalho por aba, barra inferior fixa com 4 abas e botão flutuante (+). Formulários em bottom sheet. Tema e cor de destaque definidos pelo usuário em Config. */
 :root{
   --bg:#0D0D10; --surface:#17171C; --raised:#202027; --sunk:#111115; --ink:#F3F2F7; --muted:#9D9CAA; --line:#2A2A33;
@@ -1095,7 +1100,7 @@ function importData(){openSheet(`<h3>Restaurar backup</h3><form class="form" id=
     sh.querySelector('#imf').onsubmit=e=>{e.preventDefault();const f=sh.querySelector('#im-file').files[0];if(f){const r=new FileReader();r.onload=()=>apply(r.result);r.readAsText(f)}else apply(sh.querySelector('#im-text').value)}})}
 function load2(){const d=defaults();if(S.demo)delete S.demo;if(!S.onboarded&&S.tx&&S.tx.length)S.onboarded=true;S.settings=Object.assign(d.settings,S.settings||{});S.plan=Object.assign(d.plan,S.plan||{});if(!S.accounts||!S.accounts.length)S.accounts=d.accounts;if(!S.cats||!S.cats.length)S.cats=d.cats;S.cards=S.cards||[];S.paidInv=S.paidInv||{};
   S.transfers=S.transfers||[];S.incomes=S.incomes||[];S.cards.forEach(c=>{if(!c.kind)c.kind='credito'});S.cats.forEach(c=>{if(!c.subs)c.subs=[]});if(!S.settings.user)S.settings.user={name:'',photo:''};
-  HOME.forEach((h,i)=>{if(!S.settings.home.some(x=>x.id===h[0])){const o={id:h[0],on:true};if(i===0)S.settings.home.unshift(o);else S.settings.home.push(o)}})}
+  HOME.forEach((h,i)=>{if(!S.settings.home.some(x=>x.id===h[0])){const o={id:h[0],on:true};if(i===0)S.settings.home.unshift(o);else S.settings.home.push(o)}});sanitizeState()}
 function ensureIncomes(){let ch=false;for(const r of S.incomes){if(r.last===CM)continue;r.last=CM;ch=true;if(S.tx.some(t=>t.src===r.id&&ymOf(t.date)===CM))continue;
   S.tx.push({id:uid(),type:'in',amount:r.amount,desc:r.name,catId:r.catId||(catsOf('in')[0]||{}).id||'',date:dayIn(CM,r.day),method:'transf',accountId:r.accountId,card:'',inv:'',inst:null,group:null,paid:false,note:'',src:r.id})}if(ch)persistLocal()}
 
@@ -1228,7 +1233,7 @@ function profileSheet(){const u=S.settings.user;let photo=u.photo||'';
     <div style="display:flex;align-items:center;gap:14px"><span id="pf-av">${avatarHtml()}</span><div style="display:flex;flex-direction:column;gap:8px"><label class="act" style="cursor:pointer;position:relative;overflow:hidden">${ic('camera',18)}Escolher foto<input type="file" id="pf-file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label><button type="button" class="link" id="pf-rm" ${photo?'':'hidden'}>Remover foto</button></div></div>
     <div class="field"><label for="pf-n">Seu nome</label><input id="pf-n" value="${esc(u.name||'')}" maxlength="24" placeholder="Como quer ser chamado"></div>
     <div class="btns"><button class="btn" type="submit">Salvar</button></div></form>`,sh=>{const $=s=>sh.querySelector(s);
-    const pv=()=>{$('#pf-av').innerHTML=photo?`<img class="avatar" src="${photo}" alt="">`:avatarHtml();$('#pf-rm').hidden=!photo};
+    const pv=()=>{$('#pf-av').innerHTML=photo?`<img class="avatar" src="${esc(simg(photo))}" alt="">`:avatarHtml();$('#pf-rm').hidden=!photo};
     $('#pf-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const img=new Image();img.onload=()=>{const z=160,cv=document.createElement('canvas');cv.width=cv.height=z;const m=Math.min(img.width,img.height);cv.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,z,z);photo=cv.toDataURL('image/jpeg',.82);pv()};img.onerror=()=>toast('Não consegui abrir essa imagem');img.src=rd.result};rd.readAsDataURL(f)};
     $('#pf-rm').onclick=()=>{photo='';S.settings.user.photo='';pv()};
     $('#pff').onsubmit=e=>{e.preventDefault();S.settings.user={name:$('#pf-n').value.trim(),photo};done('Perfil salvo')}})}
@@ -1936,6 +1941,40 @@ function vConfig(){const st=S.settings,u=st.user||{};
    <p class="hint" style="text-align:center;margin-top:16px">${esc(APP_NAME)} v${APP_VERSION}${AND?' · Android '+esc((()=>{try{return AND.version()}catch(e){return''}})()):''}</p>
    <p style="text-align:center;margin:4px 0 0">${FB.user?`<button type="button" class="link" data-act="cloud" style="margin:0 auto;color:var(--muted);font-weight:600;font-size:13px;text-decoration:underline">Excluir minha conta</button>`:''}<button type="button" class="link" data-act="wipe" style="margin:0 auto;color:var(--muted);font-weight:600;font-size:13px;text-decoration:underline">Apagar dados deste celular</button></p></section>`;
   return['',body]}
+/* ================= segurança: todo dado que entra (abrir, backup, nuvem) é conferido ================= */
+const sid=x=>String(x==null?'':x).replace(/[^\w.:@+-]/g,'').slice(0,80);
+const scol=(x,d)=>/^#[0-9a-fA-F]{3,8}$/.test(String(x||''))?x:d;
+const sdate=(x,d)=>/^\d{4}-\d{2}-\d{2}$/.test(String(x||''))?x:d;
+const sym=x=>/^\d{4}-\d{2}$/.test(String(x||''))?x:'';
+const stime=x=>/^\d{2}:\d{2}$/.test(String(x||''))?x:'';
+const sint=(x,min,max,d)=>{const n=Math.round(Number(x));return isFinite(n)?Math.min(max,Math.max(min,n)):d};
+const scents=x=>sint(x,-1e12,1e12,0);
+const sstr=(x,n)=>String(x==null?'':x).slice(0,n||200);
+const sone=(x,list,d)=>list.includes(x)?x:d;
+const simg=x=>/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(String(x||''))?x:'';
+const spkg=x=>/^[\w.]{1,200}$/.test(String(x||''))?x:'';
+function sanitizeState(){const methods=METHODS.map(m=>m.id),banks=BANKS.map(b=>b[0]),icons=Object.keys(P);
+  const st=S.settings;st.accent=scol(st.accent,'#9B7BFF');st.theme=sone(st.theme,['dark','light','system'],'dark');st.highlight=sone(st.highlight,HIGHLIGHTS.map(h=>h[0]),'pix');
+  st.currency=sone(st.currency,CURS.map(c=>c[0]),'BRL');st.autoImport=sone(st.autoImport,['auto','review',undefined],'review');
+  st.user={name:sstr((st.user||{}).name,40),photo:simg((st.user||{}).photo)};st.blockedApps=(st.blockedApps||[]).map(spkg).filter(Boolean);
+  st.appNames=Object.fromEntries(Object.entries(st.appNames||{}).filter(([k])=>spkg(k)).map(([k,v])=>[k,sstr(v,60)]));
+  st.home=(st.home||[]).filter(x=>x&&HOME.some(h=>h[0]===x.id)).map(x=>({id:x.id,on:!!x.on}));
+  if(st.ans)st.ans=st.ans.filter(x=>x&&ANS.some(a=>a[0]===x.id)).map(x=>({id:x.id,on:!!x.on}));
+  S.accounts=(S.accounts||[]).map(a=>({id:sid(a.id)||'a_'+uid(),name:sstr(a.name,40)||'Conta',bank:sone(a.bank,banks,''),kind:sone(a.kind,Object.keys(ACC_KINDS),'corrente'),initial:scents(a.initial),color:scol(a.color,'#9B7BFF'),include:a.include!==false}));
+  if(!S.accounts.length)S.accounts=defaults().accounts;
+  S.cards=(S.cards||[]).map(c=>({id:sid(c.id)||'k_'+uid(),kind:sone(c.kind,['credito','debito','ambos'],'credito'),bank:sone(c.bank,banks,''),name:sstr(c.name,30)||'Cartão',last4:String(c.last4||'').replace(/\D/g,'').slice(0,4),limit:Math.max(0,scents(c.limit)),close:sint(c.close,1,31,1),due:sint(c.due,1,31,10),color:scol(c.color,'#6A3FE0'),color2:scol(c.color2,scol(c.color,'#6A3FE0')),accountId:sid(c.accountId)}));
+  S.cats=(S.cats||[]).map(c=>({id:sid(c.id)||'c_'+uid(),type:sone(c.type,['in','out'],'out'),name:sstr(c.name,30)||'Categoria',icon:sone(c.icon,icons,'dots'),color:scol(c.color,'#9D9CAA'),emoji:sstr(c.emoji,8),photo:simg(c.photo),subs:(c.subs||[]).map(x=>sstr(x,30)).filter(Boolean).slice(0,50)}));
+  if(!S.cats.length)S.cats=defaults().cats;
+  const tx=t=>({id:sid(t.id)||uid(),type:sone(t.type,['in','out'],'out'),amount:Math.abs(scents(t.amount)),desc:sstr(t.desc,80),note:sstr(t.note,200),catId:sid(t.catId),sub:sstr(t.sub,30),date:sdate(t.date,TODAY),time:stime(t.time),
+    method:sone(t.method,methods,'pix'),accountId:sid(t.accountId),card:sid(t.card),inv:sym(t.inv),inst:t.inst?{n:sint(t.inst.n,1,99,1),of:sint(t.inst.of,1,99,1)}:null,group:t.group?sid(t.group):null,paid:!!t.paid,
+    kind:sone(t.kind,['fixa','assinatura'],''),loan:sone(t.loan,['in','out'],''),src:sid(t.src),ext:sstr(t.ext,80)});
+  S.tx=(S.tx||[]).filter(t=>t&&typeof t==='object').map(tx);
+  S.inbox=(S.inbox||[]).filter(t=>t&&typeof t==='object').map(t=>Object.assign(tx(t),{on:!!t.on,dup:!!t.dup,low:!!t.low,src:sstr(t.src,300),app:sstr(t.app,60),pkg:spkg(t.pkg)}));
+  S.transfers=(S.transfers||[]).map(t=>({id:sid(t.id)||uid(),from:sid(t.from),to:sid(t.to),amount:Math.abs(scents(t.amount)),date:sdate(t.date,TODAY)}));
+  S.incomes=(S.incomes||[]).map(r=>({id:sid(r.id)||'r_'+uid(),name:sstr(r.name,40)||'Renda',amount:Math.abs(scents(r.amount)),day:sint(r.day,1,31,5),accountId:sid(r.accountId),catId:sid(r.catId),last:sym(r.last)}));
+  const pi={};for(const k in S.paidInv||{}){const p=S.paidInv[k]||{};const i=k.indexOf('|');if(i<1)continue;const kk=sid(k.slice(0,i))+'|'+sym(k.slice(i+1));if(kk.endsWith('|'))continue;pi[kk]={acc:sid(p.acc),date:sdate(p.date,TODAY)}}S.paidInv=pi;
+  const pl=S.plan||{};S.plan={limit:Math.max(0,scents(pl.limit)),budgets:Object.fromEntries(Object.entries(pl.budgets||{}).map(([k,v])=>[sid(k),Math.max(0,scents(v))]).filter(([k,v])=>k&&v>0)),
+    goals:(pl.goals||[]).map(g=>({id:sid(g.id)||uid(),name:sstr(g.name,40)||'Meta',target:Math.max(0,scents(g.target)),saved:Math.max(0,scents(g.saved)),deadline:sym(g.deadline)}))}}
 /* ================= nuvem (sincronização) ================= */
 const CLOUD={st:'conn',code:'',id:null,email:'',name:'',col:null,ready:false,pushing:false,dirty:false,hashes:{},timer:null,to:null,last:0,pending:null};
 const DEVICE=(()=>{try{let d=localStorage.getItem('caixa.device');if(!d){d=uid();localStorage.setItem('caixa.device',d)}return d}catch(e){return 'd'+uid()}})();

@@ -99,6 +99,26 @@ As telas usam dados de exemplo e cartões sem marca de banco, para evitar proble
 
 Fora da loja, o Android bloqueia apps que pedem acesso às notificações quando instalados pelo navegador. Isso deixa de acontecer quando o app é instalado pela Play Store. Para testar antes disso, use o teste interno (passo 5) ou instale por cabo com `adb install Trocado.apk`.
 
+## 8. Segurança (você, antes de publicar)
+
+O app já vem com estas proteções:
+
+- Todo dado que entra (ao abrir, ao restaurar backup, ao baixar da nuvem) passa por um filtro que confere formato e tamanho. Backups ou notificações adulterados não conseguem injetar código na tela.
+- A página do app só carrega código do próprio app (regra de segurança de conteúdo) e, no Android, só fala com servidores `*.googleapis.com` por HTTPS. Qualquer outro endereço é bloqueado.
+- Fontes incluídas no app: nada é carregado de servidores de terceiros ao abrir.
+- Backup automático do Android e transferência entre celulares desligados para os dados do app (dados financeiros não vão para o Drive sem o usuário pedir).
+- Tráfego sem criptografia proibido. Componentes internos do Android não ficam expostos a outros apps.
+- Regras do Firestore: cada conta só lê e grava os próprios dados.
+- O APK com Premium liberado para teste fica só nos artefatos do GitHub Actions, nunca na página de download.
+
+Faça também, no seu painel:
+
+1. **Restringir a chave do Firebase:** Google Cloud Console → APIs e serviços → Credenciais → abra a "Android key" e restrinja ao pacote `app.trocado` com o SHA-1 da Play Store. Na "Browser key", restrinja aos domínios que você usa.
+2. **App Check:** no Console do Firebase → App Check, ative o **Play Integrity** para o app Android e aplique ao Firestore. Isso impede que outros apps usem o seu banco.
+3. **Chave de assinatura:** use a sua chave (passo 4). A chave `caixa.jks` do repositório é pública e serve só para testes.
+4. **Validar assinaturas no servidor:** antes de ter muitos assinantes, valide as compras pela Google Play Developer API (por exemplo com Firebase Functions). Hoje a confirmação é feita no próprio celular, o que um usuário avançado consegue burlar.
+5. **Repositório:** se o repositório for público, qualquer pessoa vê o código. Isso não expõe dados de usuários, mas considere deixá-lo privado antes de lançar.
+
 ## O que é grátis e o que é Premium
 
 | Grátis | Premium |
