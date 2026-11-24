@@ -9,7 +9,7 @@ App de controle financeiro pessoal feito para celular, com tema escuro por padr�
 - **Config**: tema (escuro, claro ou sistema), cor de destaque, nome do app, esconder valores, seções do Início, contas, cartões (cores, limite, fechamento e vencimento), categorias (nome, ícone e cor), planejamento e backup.
 
 ## Salvamento na nuvem
-Aberto pelo link do Claude, o app salva tudo na sua conta do Claude (seu email) e sincroniza entre aparelhos: entre com o mesmo email em outro celular ou computador e abra o mesmo link. Os dados ficam numa área privada de cada pessoa; nem o dono do link vê os dados dos outros. Aberto direto deste arquivo (ou pelo GitHub Pages), o app funciona só com os dados do aparelho.
+O usuário entra com a conta Google e os dados ficam salvos e sincronizados entre aparelhos (Firebase). Sem login, tudo fica salvo só no aparelho, com backup manual em Config.
 
 ## Como usar
 Abra `index.html` no navegador. Para instalar no celular como app, publique a pasta numa hospedagem estática (GitHub Pages, por exemplo) e use "Adicionar à tela inicial".

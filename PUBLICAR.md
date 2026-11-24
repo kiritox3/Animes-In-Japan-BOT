@@ -15,7 +15,7 @@ O identificador do pacote (`app.trocado`, em `android/app/build.gradle`) é perm
 ## 2. Firebase: login com Google e nuvem (você)
 
 1. Entre em https://console.firebase.google.com e crie um projeto.
-2. **Authentication** → Começar → ative **Google** e **E-mail/senha**. No provedor Google, abra "Configuração do SDK da Web" e copie o **ID do cliente Web** (termina com `.apps.googleusercontent.com`).
+2. **Authentication** → Começar → ative o provedor **Google** (o app usa só login com Google). No provedor Google, abra "Configuração do SDK da Web" e copie o **ID do cliente Web** (termina com `.apps.googleusercontent.com`).
 3. **Firestore Database** → Criar banco → modo de produção → região `southamerica-east1` (São Paulo).
 4. Em Firestore → **Regras**, cole o conteúdo do arquivo `firestore.rules` deste repositório e publique.
 5. **Configurações do projeto** → Seus apps → adicione um app **Android** com o pacote `app.trocado` e a impressão digital **SHA-1**:
@@ -25,7 +25,6 @@ O identificador do pacote (`app.trocado`, em `android/app/build.gradle`) é perm
 7. Coloque a configuração no app de um destes jeitos:
    - **Sem recompilar (uso pessoal):** no app, Config → Salvamento na nuvem → Configurar nuvem com Google. Cole o `firebaseConfig` e o ID do cliente Web.
    - **Para todos os usuários:** em `financas/index.html`, preencha `FIREBASE_CONFIG` com o objeto e `GOOGLE_WEB_CLIENT_ID` com o ID do cliente Web.
-8. Em Authentication → Templates, ajuste o idioma do email de redefinição de senha para português.
 
 Os valores do `firebaseConfig` não são senhas: quem protege os dados são as regras do passo 4. O login com Google no Android usa o Credential Manager (a tela do Google não abre dentro do app); por isso o SHA-1 do passo 5 é obrigatório.
 

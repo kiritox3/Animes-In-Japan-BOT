@@ -92,7 +92,7 @@ final class NotifParser {
             if (!isIn) {
                 String hay = desc + " " + t;
                 for (String[] k : CATS) if (Pattern.compile(k[1], FLAGS).matcher(hay).find()) { cat = k[0]; break; }
-            } else if (low.matches(".*sal[aá]rio.*")) cat = "Salário";
+            }
 
             Matcher l4 = LAST4.matcher(t);
             JSONObject o = new JSONObject();

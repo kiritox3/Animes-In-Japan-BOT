@@ -56,6 +56,10 @@ final class Bridge {
     @JavascriptInterface
     public void setPushTopics(boolean news, boolean premium) { PushService.setTopics(act, news, premium); }
 
+    /** Lista (JSON) de avisos com data: [{id, at, title, text}]. Substitui a anterior. */
+    @JavascriptInterface
+    public void schedule(String json) { Scheduler.set(act, json); }
+
     /** Mostra um aviso do app na barra de notificações. */
     @JavascriptInterface
     public boolean notify(String title, String text) { return AppNotify.show(act, title, text); }
