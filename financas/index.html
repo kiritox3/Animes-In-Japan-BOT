@@ -616,9 +616,47 @@ button.cfgrow:active,button.row:active{transform:scale(.988)}
 .dynrow[aria-pressed="true"] .ck{opacity:1;transform:none}
 .dynrow .ck{opacity:0;transform:scale(.6);transition:transform .45s var(--e-spring),opacity .25s;color:var(--accent-text)}
 .dynsw{width:34px;height:34px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 var(--bw) var(--hair2)}
+/* ===== Fluida 2: desempenho, deslizar entre abas e personalidade ===== */
+html,body{overflow-x:clip}
+#view{overflow-x:clip;will-change:auto}
+body{background:var(--bg)!important}
+.bgfx{position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(90% 55% at 15% -5%,color-mix(in srgb,var(--glowc) 24%,transparent),transparent 60%),radial-gradient(70% 40% at 105% 15%,color-mix(in srgb,var(--accent2) 12%,transparent),transparent 60%)}
+/* folhas leves: sem desfoque atrás, movimento só na GPU */
+.scrim{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(3,4,8,.62)}
+:root.light .scrim{background:rgba(10,12,24,.42)}
+.sheet{transform:translate3d(0,105%,0);transition:transform .42s var(--e-out),--sg .7s var(--e-out);backface-visibility:hidden;contain:layout style;box-shadow:0 -12px 40px -16px rgba(0,0,0,.6)}
+.scrim.open .sheet{transform:translate3d(0,0,0)}
+.scrim.closing .sheet{transition:transform .26s var(--e-in);transform:translate3d(0,105%,0)}
+@media (min-width:760px){.sheet{transform:translate3d(0,24px,0) scale(.97)}.scrim.open .sheet{transform:none}}
+/* alinhamentos */
+.fsopts button b{height:30px;display:flex;align-items:flex-end;justify-content:center}
+.vopts button{justify-content:flex-start}
+.vmini{height:70px;align-content:start;overflow:hidden}
+/* assinatura do app: aurora viva nos destaques */
+.hero,.rhero,.mhero{color:#fff!important;background:linear-gradient(160deg,color-mix(in srgb,var(--hc,var(--accent)) 38%,#07080d),#0a0b12 75%)!important;border:var(--bw) solid color-mix(in srgb,var(--hc,var(--accent)) 40%,transparent);isolation:isolate}
+.hero>*,.rhero>*,.mhero>*{z-index:1}
+.hero::before,.rhero::before,.mhero::before{z-index:0}
+.hero::after,.rhero::after,.mhero::after{content:"";position:absolute;z-index:0;pointer-events:none;width:160%;height:160%;left:-30%;top:-30%;opacity:.75;
+  background:radial-gradient(30% 28% at 28% 30%,color-mix(in srgb,var(--hc,var(--accent)) 85%,transparent),transparent 70%),radial-gradient(26% 24% at 74% 58%,color-mix(in srgb,var(--accent2) 60%,transparent),transparent 70%),radial-gradient(22% 22% at 38% 80%,color-mix(in srgb,var(--hc,var(--accent)) 50%,#FF6FA5),transparent 70%);
+  animation:aurora 26s linear infinite;will-change:transform}
+@keyframes aurora{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(180deg) scale(1.12)}100%{transform:rotate(360deg) scale(1)}}
+.rhero .rlim{color:#1a1530}
+.rhero .rbuy{color:#15121f}
+/* pulso do mês */
+.pulso{padding:4px 2px 2px}
+.pulso .k{display:flex;align-items:center;gap:8px;font-size:calc(10.5px*var(--fs));letter-spacing:.16em;font-weight:800;color:var(--muted);text-transform:uppercase}
+.pulso .dot{width:8px;height:8px;border-radius:50%;background:var(--pc);box-shadow:0 0 0 0 var(--pc);position:relative}
+.pulso .dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--pc);animation:pulse 2.4s var(--e-out) infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(3.2);opacity:0}}
+.pulso p{margin:8px 0 0;font-family:var(--font-num);font-size:calc(21px*var(--fs));line-height:1.28;letter-spacing:-.025em;font-weight:600;color:var(--ink)}
+.pulso p b{color:var(--pc);font-weight:700}
+.pulso p span{color:var(--muted)}
+/* indicador ao deslizar entre abas */
+.swipehint{position:fixed;top:50%;z-index:24;width:44px;height:44px;margin-top:-22px;border-radius:50%;display:grid;place-items:center;background:var(--glass);border:var(--bw) solid var(--hair2);color:var(--accent-text);opacity:0;pointer-events:none;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 </style>
 </head>
 <body>
+<div class="bgfx" aria-hidden="true"></div>
 <div class="app">
   <header class="top" id="head"></header>
   <main id="view"></main>
@@ -939,7 +977,7 @@ function gIn(){const i=monthIn(M);let items=applyCommon(i.items.slice());
   if(gstatus==='open')items=items.filter(t=>!t.paid);else if(gstatus==='paid'||gstatus==='late')items=items.filter(t=>t.paid);
   items=sortList(items);
   const pill=(k,l,n)=>`<button type="button" class="pill" data-act="gstatus" data-v="${k}" aria-pressed="${gstatus===k}">${l} <span>${n}</span></button>`;
-  return `<div class="hero" style="background:linear-gradient(135deg,color-mix(in srgb,var(--in) 55%,#000),color-mix(in srgb,var(--in) 85%,#000));color:#fff"><div><div class="lbl">Entradas do mês</div><div class="big num" style="margin-top:6px">${fmt(i.total)}</div></div>
+  return `<div class="hero" style="--hc:var(--in);background:linear-gradient(135deg,color-mix(in srgb,var(--in) 55%,#000),color-mix(in srgb,var(--in) 85%,#000));color:#fff"><div><div class="lbl">Entradas do mês</div><div class="big num" style="margin-top:6px">${fmt(i.total)}</div></div>
    <div class="trio" style="grid-template-columns:1fr 1fr"><button type="button" data-act="gstatus" data-v="paid" aria-pressed="${gstatus==='paid'}"><b class="num">${fmt(i.rec)}</b><small>Recebido</small></button><button type="button" data-act="gstatus" data-v="open" aria-pressed="${gstatus==='open'}"><b class="num">${fmt(i.total-i.rec)}</b><small>A receber</small></button></div></div>
   ${searchRow('Buscar uma entrada')}
   <div class="pills">${pill('all','Todas',cnt.all)}${pill('open','A receber',cnt.open)}${pill('paid','Recebidas',cnt.paid)}</div>
@@ -974,7 +1012,7 @@ function openSheet(html,mount){const had=!!scrim;closeSheet(true);
   scrim.innerHTML=`<div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>`;
   scrim.addEventListener('click',e=>{if(e.target===scrim)closeSheet()});
   document.body.appendChild(scrim);document.body.style.overflow='hidden';
-  requestAnimationFrame(()=>scrim&&scrim.classList.add('open'));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>scrim&&scrim.classList.add('open')));
   const shx=scrim.querySelector('.sheet'),scx=scrim;sheetDrag(shx,scx);if(had)setTimeout(()=>scx.classList.remove('swap'),60);
   mount&&mount(shx);sheetTint(shx)}
 function closeSheet(instant){if(!scrim)return;const s=scrim;scrim=null;document.body.style.overflow='';if(instant){s.remove();return}s.classList.add('closing');s.classList.remove('open');setTimeout(()=>s.remove(),320)}
@@ -1702,12 +1740,12 @@ function homeBody(secs){const on=S.settings.home.filter(x=>x.on&&secs[x.id]);if(
   const bh=on.filter(x=>!ESS_HOME.has(x.id)).map(x=>secs[x.id]()).join('');
   return on.filter(x=>ESS_HOME.has(x.id)).map(x=>secs[x.id]()).join('')+(bh.trim()?`<div class="xp ${homeMore?'open':''}" id="homexp"><div>${bh}</div></div><section><button type="button" class="morebtn" data-act="homemore" aria-expanded="${homeMore}">${homeMore?'Mostrar menos ':'Mais detalhes '}${ic('down',16,2.4)}</button></section>`:'')}
 function vInicio(){const u=S.settings.user||{};const nm=u.name||CLOUD.name||'';
-  const h=`<div class="hl" style="gap:12px">${logoMark(42)}<div><p class="sub" style="margin:0">${nm?'Olá,':esc(monthLong(CM))}</p><h1 class="ttl" style="font-size:calc(24px*var(--fs))">${esc(nm||APP_NAME)}</h1></div></div>
+  const h=`<div class="hl" style="gap:12px">${logoMark(42)}<div><p class="sub" style="margin:0">${nm?greet()+',':greet()}</p><h1 class="ttl" style="font-size:calc(24px*var(--fs))">${esc(nm||APP_NAME)}</h1></div></div>
     <div class="hr"><button type="button" class="iconbtn" data-act="cloud" aria-label="Salvamento na nuvem">${cloudIco()}</button><button type="button" class="iconbtn" data-act="homecfg" aria-label="Personalizar tela inicial">${ic('grid',22)}</button></div>`;
   const tabs=`<div class="subtabs" role="group" style="grid-template-columns:1fr 1fr;margin-top:4px"><button type="button" data-act="htab" data-v="desp" aria-pressed="${htab==='desp'}">Despesas</button><button type="button" data-act="htab" data-v="contas" aria-pressed="${htab==='contas'}">Contas e cartões</button></div>`;
   if(htab==='contas')return[h,tabs+pcContas()+sCartoes()];
   const secs={lembretes:sLembretes,quick:sQuick,resumo:sResumo,cartoes:sCartoes,ultimas:sUltimas,dicas:sDicas,limites:sLimites,hoje:sHoje,ritmo:sRitmo,fixas:sFixas,metas:sMetas,saldo:sSaldo,mes:sMes,dia:sDia};
-  const body=sInbox()+tabs+homeBody(secs)+
+  const body=sInbox()+tabs+sPulso()+homeBody(secs)+
     `<section><button type="button" class="act" data-act="homecfg" style="width:100%">${ic('grid',18)}Personalizar tela inicial</button></section>`;
   return[h,body]}
 function sResumo(){const o=monthOut(HM),i=monthIn(HM),ol=outlook();const sal=saldoTotal(),res=S.settings.reserveDeduct?reservesTotal():0;const lim=S.plan.limit;
@@ -2323,11 +2361,10 @@ function renderTabs(){const el=document.getElementById('tabs');const i=TABS.find
   el.querySelectorAll('.tab').forEach((b,k)=>{const want=TABS[k][0]===tab?'page':'false';if(b.getAttribute('aria-current')!==want){b.setAttribute('aria-current',want);b.querySelector('.ti').innerHTML=ic(TABS[k][2],24,want==='page'?2.3:1.9)}})}
 const EASE='cubic-bezier(.16,1,.3,1)';
 function afterRender(){const n=MOT.nav;MOT.nav=null;glow();bindCarGlow();if(!n||!motionOK()||!view.animate)return;
-  if(n.kind==='soft'){[...view.querySelectorAll('.row,.tile,.goal,.lim2,.uprow')].slice(0,16).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:340,delay:i*18,easing:EASE,fill:'backwards'}));return}
-  const dx=n.kind==='month'?n.dir*22:n.dir*30,dy=dx?0:12;
-  if(n.kind!=='month')head.animate([{opacity:0},{opacity:1}],{duration:300,easing:EASE});
-  let k=0;[...view.children].forEach(el=>{if(n.kind==='month'&&el.classList.contains('monthbar'))return;if(k>=9)return;
-    el.animate([{opacity:0,transform:`translate(${dx}px,${dy}px)`},{opacity:1,transform:'none'}],{duration:n.kind==='open'?620:480,delay:(k++)*(n.kind==='open'?55:38),easing:EASE,fill:'backwards'})});
+  if(n.kind==='soft'){view.animate([{opacity:.55},{opacity:1}],{duration:200,easing:EASE});return}
+  const dx=n.kind==='month'?n.dir*26:n.dir*44,dy=dx?0:10;
+  view.animate([{opacity:0,transform:`translate3d(${dx}px,${dy}px,0)`},{opacity:1,transform:'none'}],{duration:n.kind==='open'?480:300,easing:EASE});
+  if(n.kind!=='month')head.animate([{opacity:0},{opacity:1}],{duration:240,easing:EASE});
   countUp(view.querySelectorAll('.big.num'))}
 function countUp(els){if(S.settings.hide)return;els.forEach(el=>{if(el.childNodes.length!==1||el.firstChild.nodeType!==3)return;
   const fin=el.textContent,neg=/[-−]/.test(fin),v=Math.round(parseFloat(fin.replace(/[^\d,]/g,'').replace(',','.'))*100);if(!isFinite(v)||v<100)return;
@@ -2364,7 +2401,7 @@ document.addEventListener('change',e=>{const el=e.target;if(el.type==='checkbox'
   else if(el.id==='haptog'){S.settings.haptics=el.checked;save();haptic(1)}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.settings.dyn==='sistema')applyTheme()});
 /* escolhas de visualização */
-const VIEW_OPTS=[['essencial','Essencial','Só o principal: saldo, quanto dá para gastar e últimos gastos. O resto fica a um toque.',3],['completo','Completo','Todos os blocos, gráficos e detalhes abertos.',6]];
+const VIEW_OPTS=[['essencial','Essencial','Só o principal: saldo, quanto dá para gastar e últimos gastos. O resto fica a um toque.',3],['completo','Completo','Todos os blocos, gráficos e detalhes abertos.',5]];
 function viewPicker(){const cur=S.settings.view||'completo';return `<div class="vopts" role="group" aria-label="Modo de visualização">${VIEW_OPTS.map(([v,l,d,n])=>`<button type="button" data-view="${v}" aria-pressed="${cur===v}"><span class="vmini"><i class="h"></i>${'<i></i>'.repeat(n)}</span><b>${l}</b><small>${d}</small></button>`).join('')}</div>`}
 function bindView(sh){sh.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{S.settings.view=b.dataset.view;pressGroup(sh,'[data-view]',b);save();haptic(0)})}
 function viewSheet(){openSheet(`<h3>Modo de visualização</h3><p class="hint" style="margin-bottom:12px">Escolha quanta informação aparece de uma vez. Dá para trocar quando quiser.</p>${viewPicker()}<div class="btns" style="margin-top:14px"><button type="button" class="btn" id="vw-ok">Pronto</button></div>`,sh=>{bindView(sh);sh.querySelector('#vw-ok').onclick=()=>{closeSheet();nav('tab',0);render()}})}
@@ -2375,6 +2412,29 @@ function dynSheet(){const st=S.settings,light=document.documentElement.classList
     sh.querySelectorAll('[data-dyn]').forEach(b=>b.onclick=()=>{if(b.disabled)return;st.dyn=b.dataset.dyn;pressGroup(sh,'[data-dyn]',b);save();applyTheme();haptic(0)});
     sh.querySelector('#dy-ok').onclick=()=>{closeSheet();render()}})}
 const DYN_TXT={fixa:'Cor fixa',sistema:'Do sistema',mes:'Conforme o mês'};
+/* ---------- Fluida 2 ---------- */
+function greet(){const h=new Date().getHours();return h<5?'Boa noite':h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}
+function sPulso(){if(HM!==CM)return '';let txt,col;const hasTx=S.tx.some(t=>ymOf(t.date)===CM);
+  if(!hasTx){col='var(--accent)';txt=`Tudo pronto. <span>Anote um gasto no + e o app faz as contas por você.</span>`}
+  else{const o=monthOut(CM),ol=outlook(),lim=S.plan.limit,m=mood(),fim=dim(CM)+' de '+monthName(CM);
+    if(m===2){col='var(--out)';txt=lim&&o.total>lim?`Você passou <b class="num">${fmt(o.total-lim)}</b> do limite. <span>Segure os gastos até ${fim}.</span>`:`Mês apertado. <span>O que falta pagar passa do que você tem até ${fim}.</span>`}
+    else if(m===1){col='var(--warn)';txt=`Restam <b class="num">${fmt(lim-o.total)}</b> do seu limite. <span>Vá com calma até ${fim}.</span>`}
+    else{col='var(--in)';txt=`Mês tranquilo. <span>Dá para gastar</span> <b class="num">${fmt(ol.perDay)}</b> <span>por dia até ${fim}.</span>`}}
+  return `<section class="pulso" style="--pc:${col}"><div class="k"><span class="dot"></span>Seu mês</div><p>${txt}</p></section>`}
+/* deslizar o dedo para o lado troca de aba */
+(function(){let x0=null,y0=0,lock=null,dx=0,t0=0;const EDGE=24;
+  const hs=el=>{for(;el&&el!==view;el=el.parentElement){if(el.matches&&el.matches('input,textarea,select,svg,.carousel,.toggle'))return true;if(el.scrollWidth>el.clientWidth+2){const o=getComputedStyle(el).overflowX;if(o==='auto'||o==='scroll')return true}}return false};
+  const idx=()=>Math.max(0,TABS.findIndex(x=>x[0]===tab));
+  view.addEventListener('touchstart',e=>{x0=null;if(scrim||e.touches.length!==1)return;const t=e.touches[0];if(t.clientX<EDGE||t.clientX>innerWidth-EDGE||hs(e.target))return;x0=t.clientX;y0=t.clientY;lock=null;dx=0;t0=performance.now()},{passive:true});
+  view.addEventListener('touchmove',e=>{if(x0==null||lock==='v')return;const t=e.touches[0],ddx=t.clientX-x0,ddy=t.clientY-y0;
+    if(lock===null){if(Math.abs(ddx)<12&&Math.abs(ddy)<12)return;lock=Math.abs(ddx)>Math.abs(ddy)*1.5?'h':'v';if(lock==='v')return;x0=t.clientX;t0=performance.now()}
+    const d=t.clientX-x0,i=idx(),can=d<0?i<TABS.length-1:i>0;dx=can?d:d*.2;
+    view.style.transform=`translate3d(${dx*.55}px,0,0)`;view.style.opacity=String(1-Math.min(.45,Math.abs(dx)/innerWidth*.9));if(e.cancelable)e.preventDefault()},{passive:false});
+  const end=()=>{if(x0==null)return;x0=null;if(lock!=='h')return;lock=null;const v=Math.abs(dx)/Math.max(1,performance.now()-t0),dir=dx<0?1:-1,j=idx()+dir;
+    const from={transform:view.style.transform,opacity:view.style.opacity||'1'};view.style.transform='';view.style.opacity='';
+    if(j>=0&&j<TABS.length&&(Math.abs(dx)>innerWidth*.25||(v>.4&&Math.abs(dx)>36))){const b=document.querySelector(`[data-tab="${TABS[j][0]}"]`);if(b)b.click()}
+    else if(motionOK())view.animate([from,{transform:'none',opacity:1}],{duration:300,easing:EASE})};
+  view.addEventListener('touchend',end);view.addEventListener('touchcancel',end)})();
 if(window.matchMedia)matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(S.settings.theme==='system')applyTheme()});
 
 load();if(!S.inbox)S.inbox=[];premInit();MOT.nav={kind:'open',dir:0};render();requestAnimationFrame(()=>requestAnimationFrame(()=>document.documentElement.classList.remove('boot')));cloudInit();andPull();scheduleSync();if(!S.onboarded)setTimeout(()=>{if(!S.onboarded&&!scrim)onboarding(1)},400);document.addEventListener('visibilitychange',()=>{if(!document.hidden){andPull();if(AND&&tab==='config'&&!scrim&&!page)render()}});setInterval(()=>{if(CLOUD.st==='ok')setCloud('ok')},60000);
