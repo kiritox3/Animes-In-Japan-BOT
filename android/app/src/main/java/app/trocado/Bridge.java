@@ -116,6 +116,23 @@ final class Bridge {
     @JavascriptInterface
     public void setBars(String color, boolean light) { act.runOnUiThread(() -> act.setBars(color, light)); }
 
+    /** Toque curto de vibração (0 = leve, 1 = confirmação). */
+    @JavascriptInterface
+    public void haptic(int kind) { act.runOnUiThread(() -> act.haptic(kind)); }
+
+    /** Cor de destaque do sistema (Material You, Android 12+). Devolve "" quando não existe. */
+    @JavascriptInterface
+    public String systemAccent(boolean dark) {
+        if (Build.VERSION.SDK_INT < 31) return "";
+        try {
+            int id = dark ? android.R.color.system_accent1_300 : android.R.color.system_accent1_600;
+            int c = act.getResources().getColor(id, act.getTheme());
+            return String.format("#%06X", 0xFFFFFF & c);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     @JavascriptInterface
     public String version() {
         try {

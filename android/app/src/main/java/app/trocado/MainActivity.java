@@ -9,6 +9,7 @@ import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.HapticFeedbackConstants;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.ValueCallback;
@@ -129,6 +130,13 @@ public class MainActivity extends Activity {
     void billingLoad() { billing.loadProducts(); }
     void billingBuy(String id) { billing.buy(id); }
     void billingRefresh() { billing.refresh(); }
+
+    void haptic(int kind) {
+        if (web == null) return;
+        int k = kind == 1 ? (Build.VERSION.SDK_INT >= 30 ? HapticFeedbackConstants.CONFIRM : HapticFeedbackConstants.CONTEXT_CLICK)
+                : HapticFeedbackConstants.CLOCK_TICK;
+        web.performHapticFeedback(k);
+    }
 
     void setBars(String color, boolean light) {
         try {
