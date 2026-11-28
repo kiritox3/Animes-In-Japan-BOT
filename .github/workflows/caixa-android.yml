@@ -26,6 +26,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       # Chave de envio para a Play Store (opcional). Sem estes segredos, usa a chave de teste do repositório.
       - name: Preparar chave de assinatura
@@ -47,7 +48,8 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
           # Arquivo da Play Store e APK público: Premium cobrado normalmente.
-          ./gradlew --no-daemon bundleRelease assembleRelease
+          # Repete se o repositório de bibliotecas recusar por excesso de pedidos (erro 429).
+          for i in 1 2 3; do ./gradlew --no-daemon bundleRelease assembleRelease && break; [ $i = 3 ] && exit 1; sleep $((i*45)); done
           cp app/build/outputs/apk/release/app-release.apk ../Trocado.apk
           # APK pessoal (Premium liberado para teste): fica só nos artefatos da execução, nunca na página pública.
           ./gradlew --no-daemon assembleRelease -PunlockPremium=true
